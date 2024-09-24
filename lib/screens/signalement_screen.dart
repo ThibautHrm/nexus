@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:nexus/models/signalement_model.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:nexus/screens/create_signalement_screen.dart';
@@ -54,19 +55,24 @@ class SignalementScreenState extends State<SignalementScreen> {
   void _showSignalementDetails(SignalementModel signalement) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return SignalementDetailsModal(
           signalement: signalement,
           isEditable: _currentUser?.uid == signalement.auteurId,
+          isStaff: _currentUser?.role == 'staff',
           onDelete: () {
             _deleteSignalement(signalement.id);
+            Navigator.pop(context);
           },
           onEdit: () {
             _editSignalement(signalement);
           },
         );
       },
-    );
+    ).then((_) {
+      _loadSignalements();
+    });
   }
 
   Future<void> _deleteSignalement(String id) async {
@@ -86,6 +92,40 @@ class SignalementScreenState extends State<SignalementScreen> {
     });
   }
 
+  IconData _getCategorieIcon(String categorie) {
+    switch (categorie.toLowerCase()) {
+      case 'infrastructure':
+        return Icons.business;
+      case 'sécurité':
+        return Icons.security;
+      case 'maintenance':
+        return Icons.build;
+      case 'harcèlement':
+        return Icons.report_gmailerrorred;
+      case 'autre':
+        return Icons.help_outline;
+      default:
+        return Icons.report_problem;
+    }
+  }
+
+  Color _getStatutColor(String statut) {
+    switch (statut.toLowerCase()) {
+      case 'en attente':
+        return Colors.orange;
+      case 'en cours':
+        return Colors.blue;
+      case 'résolu':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,11 +140,35 @@ class SignalementScreenState extends State<SignalementScreen> {
                   itemCount: _signalements.length,
                   itemBuilder: (context, index) {
                     final signalement = _signalements[index];
-                    return ListTile(
-                      title: Text(signalement.titre),
-                      subtitle: Text('Catégorie: ${signalement.categorie}'),
-                      trailing: Text(signalement.statut),
-                      onTap: () => _showSignalementDetails(signalement),
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      child: ListTile(
+                        leading: Icon(
+                          _getCategorieIcon(signalement.categorie),
+                          color: Theme.of(context).primaryColor,
+                          size: 40,
+                        ),
+                        title: Text(
+                          signalement.titre,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                            'Catégorie: ${signalement.categorie}\nDate: ${_formatDate(signalement.dateCreation)}'),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getStatutColor(signalement.statut),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            signalement.statut,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        onTap: () => _showSignalementDetails(signalement),
+                      ),
                     );
                   },
                 ),

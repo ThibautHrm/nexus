@@ -15,8 +15,34 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
 
   String titre = '';
   String description = '';
-  String categorie = '';
+  String? categorie;
   String? emplacement;
+
+  final List<String> _categories = [
+    'Infrastructure',
+    'Harcèlement',
+    'Sécurité',
+    'Maintenance',
+    'Autre',
+  ];
+
+  final List<String> _campus = [
+    'Angers',
+    'Arras',
+    'Auxerre',
+    'Bordeaux',
+    'Chartres',
+    'Grenoble',
+    'Lille',
+    'Lyon',
+    'Montpellier',
+    'Nantes',
+    'Paris',
+    'Reims',
+    'Rennes',
+    'Saint-Étienne',
+    'Toulouse',
+  ];
 
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -30,9 +56,9 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
             id: '', // L'ID sera généré par Firestore
             titre: titre,
             description: description,
-            categorie: categorie,
+            categorie: categorie ?? 'Autre',
             auteurId: currentUser.uid,
-            auteurNom: currentUser.nom, // Si vous avez ajouté ce champ
+            auteurNom: currentUser.nom,
             dateCreation: DateTime.now(),
             statut: 'En attente',
             emplacement: emplacement,
@@ -59,7 +85,10 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
           child: ListView(
             children: [
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Titre'),
+                decoration: const InputDecoration(
+                  labelText: 'Titre',
+                  prefixIcon: Icon(Icons.title),
+                ),
                 onSaved: (value) => titre = value!.trim(),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -70,7 +99,10 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  prefixIcon: Icon(Icons.description),
+                ),
                 maxLines: 5,
                 onSaved: (value) => description = value!.trim(),
                 validator: (value) {
@@ -81,26 +113,63 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Catégorie'),
-                onSaved: (value) => categorie = value!.trim(),
+              // Dropdown pour la catégorie
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Catégorie',
+                  prefixIcon: Icon(Icons.category),
+                ),
+                items: _categories
+                    .map((cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    categorie = value;
+                  });
+                },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer une catégorie.';
+                  if (value == null) {
+                    return 'Veuillez sélectionner une catégorie.';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration:
-                    const InputDecoration(labelText: 'Emplacement (optionnel)'),
-                onSaved: (value) => emplacement = value?.trim(),
+              // Dropdown pour l'emplacement (campus)
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Emplacement',
+                  prefixIcon: Icon(Icons.pin_drop_sharp),
+                ),
+                items: _campus
+                    .map((campus) => DropdownMenuItem(
+                          value: campus,
+                          child: Text(campus),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    emplacement = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Veuillez sélectionner un emplacement.';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 32),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: _submit,
-                child: const Text('Soumettre'),
+                icon: const Icon(Icons.send),
+                label: const Text('Soumettre'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
               ),
             ],
           ),

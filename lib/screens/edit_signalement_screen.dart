@@ -17,8 +17,35 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
 
   late String titre;
   late String description;
-  late String categorie;
+  String? categorie;
+  String? campus;
   String? emplacement;
+
+  final List<String> _categories = [
+    'Infrastructure',
+    'Harcèlement',
+    'Sécurité',
+    'Maintenance',
+    'Autre',
+  ];
+
+  final List<String> _campus = [
+    'Angers',
+    'Arras',
+    'Auxerre',
+    'Bordeaux',
+    'Chartres',
+    'Grenoble',
+    'Lille',
+    'Lyon',
+    'Montpellier',
+    'Nantes',
+    'Paris',
+    'Reims',
+    'Rennes',
+    'Saint-Étienne',
+    'Toulouse',
+  ];
 
   @override
   void initState() {
@@ -27,6 +54,16 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
     description = widget.signalement.description;
     categorie = widget.signalement.categorie;
     emplacement = widget.signalement.emplacement;
+
+    // Vérifie que la catégorie est dans la liste
+    if (!_categories.contains(categorie)) {
+      categorie = null;
+    }
+
+    // Vérifie que l'emplacement est dans la liste
+    if (!_campus.contains(emplacement)) {
+      emplacement = null;
+    }
   }
 
   Future<void> _submit() async {
@@ -35,7 +72,7 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
 
       widget.signalement.titre = titre;
       widget.signalement.description = description;
-      widget.signalement.categorie = categorie;
+      widget.signalement.categorie = categorie ?? 'Autre';
       widget.signalement.emplacement = emplacement;
 
       await _firebaseService.updateSignalement(widget.signalement);
@@ -58,7 +95,10 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
             children: [
               TextFormField(
                 initialValue: titre,
-                decoration: const InputDecoration(labelText: 'Titre'),
+                decoration: const InputDecoration(
+                  labelText: 'Titre',
+                  prefixIcon: Icon(Icons.title),
+                ),
                 onSaved: (value) => titre = value!.trim(),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -70,7 +110,10 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 initialValue: description,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  prefixIcon: Icon(Icons.description),
+                ),
                 maxLines: 5,
                 onSaved: (value) => description = value!.trim(),
                 validator: (value) {
@@ -81,28 +124,63 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                initialValue: categorie,
-                decoration: const InputDecoration(labelText: 'Catégorie'),
-                onSaved: (value) => categorie = value!.trim(),
+              DropdownButtonFormField<String>(
+                value: categorie,
+                decoration: const InputDecoration(
+                  labelText: 'Catégorie',
+                  prefixIcon: Icon(Icons.category),
+                ),
+                items: _categories
+                    .map((cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    categorie = value;
+                  });
+                },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer une catégorie.';
+                  if (value == null) {
+                    return 'Veuillez sélectionner une catégorie.';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                initialValue: emplacement,
-                decoration:
-                    const InputDecoration(labelText: 'Emplacement (optionnel)'),
-                onSaved: (value) => emplacement = value?.trim(),
+              DropdownButtonFormField<String>(
+                value: emplacement,
+                decoration: const InputDecoration(
+                  labelText: 'Emplacement',
+                  prefixIcon: Icon(Icons.location_on),
+                ),
+                items: _campus
+                    .map((campus) => DropdownMenuItem(
+                          value: campus,
+                          child: Text(campus),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    emplacement = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Veuillez sélectionner un emplacement.';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 32),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: _submit,
-                child: const Text('Enregistrer les modifications'),
+                icon: const Icon(Icons.save),
+                label: const Text('Enregistrer les modifications'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
               ),
             ],
           ),
