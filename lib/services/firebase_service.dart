@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:nexus/models/help_model.dart';
+import 'package:nexus/models/news_model.dart';
 import 'package:nexus/models/signalement_model.dart';
 import 'package:nexus/models/user_model.dart';
+import 'package:path/path.dart';
 
 class FirebaseService {
   // Paterne en Singleton
@@ -193,5 +198,59 @@ class FirebaseService {
   // Supprimer un signalement
   Future<void> deleteSignalement(String id) async {
     await _firestore.collection('signalements').doc(id).delete();
+  }
+
+  // Ajouter une news
+  Future<void> addNews(NewsModel news) async {
+    DocumentReference docRef = _firestore.collection('news').doc();
+    news.id = docRef.id;
+    await docRef.set(news.toMap());
+  }
+
+  // Récupérer une news par ID
+  Future<NewsModel?> getNews(String id) async {
+    DocumentSnapshot doc = await _firestore.collection('news').doc(id).get();
+    if (doc.exists) {
+      return NewsModel.fromDocument(doc);
+    }
+    return null;
+  }
+
+  // Récupérer toutes les news (avec option de filtrage par emplacement)
+  Future<List<NewsModel>> getAllNews({String? emplacement}) async {
+    Query query =
+        _firestore.collection('news').orderBy('dateCreation', descending: true);
+    if (emplacement != null) {
+      query = query.where('emplacement', isEqualTo: emplacement);
+    }
+    QuerySnapshot snapshot = await query.get();
+    return snapshot.docs.map((doc) => NewsModel.fromDocument(doc)).toList();
+  }
+
+  // Mettre à jour une news
+  Future<void> updateNews(NewsModel news) async {
+    await _firestore.collection('news').doc(news.id).update(news.toMap());
+  }
+
+  // Récupère une news avec son id
+  Future<NewsModel> getNewsById(String id) async {
+    DocumentSnapshot doc = await _firestore.collection('news').doc(id).get();
+    return NewsModel.fromDocument(doc);
+  }
+
+  // Supprimer une news
+  Future<void> deleteNews(String id) async {
+    await _firestore.collection('news').doc(id).delete();
+  }
+
+  // Upload de l'image dans Firebase Storage
+  Future<String> uploadImage(File imageFile) async {
+    String fileName = basename(imageFile.path);
+    Reference storageRef =
+        FirebaseStorage.instance.ref().child('news_images/$fileName');
+    UploadTask uploadTask = storageRef.putFile(imageFile);
+    TaskSnapshot taskSnapshot = await uploadTask;
+    String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+    return downloadUrl;
   }
 }
