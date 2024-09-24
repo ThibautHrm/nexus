@@ -220,7 +220,7 @@ class FirebaseService {
   Future<List<NewsModel>> getAllNews({String? emplacement}) async {
     Query query =
         _firestore.collection('news').orderBy('dateCreation', descending: true);
-    if (emplacement != null) {
+    if (emplacement != null && emplacement.isNotEmpty) {
       query = query.where('emplacement', isEqualTo: emplacement);
     }
     QuerySnapshot snapshot = await query.get();

@@ -1,16 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:nexus/models/user_model.dart';
+import 'package:intl/intl.dart';
 
-class ProfilScreen extends StatelessWidget {
+class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
+  ProfilScreenState createState() => ProfilScreenState();
+}
 
+class ProfilScreenState extends State<ProfilScreen> {
+  final User? user = FirebaseAuth.instance.currentUser;
+  late Future<UserModel?> _userFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _userFuture = _fetchUserData();
+  }
+
+  Future<UserModel?> _fetchUserData() async {
+    if (user == null) return null;
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('utilisateurs')
+        .doc(user!.uid)
+        .get();
+    if (doc.exists) {
+      return UserModel.fromDocument(doc);
+    }
+    return null;
+  }
+
+  void _editProfile(UserModel userData) async {
+    // Naviguer vers l'écran d'édition du profil
+    final updatedUser =
+        await Navigator.pushNamed(context, '/editProfile', arguments: userData);
+    if (updatedUser != null) {
+      setState(() {
+        _userFuture = _fetchUserData();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (user == null) {
       return Scaffold(
         body: Center(
@@ -22,139 +57,218 @@ class ProfilScreen extends StatelessWidget {
       );
     }
 
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('utilisateurs')
-          .doc(user.uid)
-          .get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text('Mon Profil'),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.grey.shade100,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.black87,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: FutureBuilder<UserModel?>(
+        future: _userFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
               child: CircularProgressIndicator(),
-            ),
-          );
-        }
+            );
+          }
 
-        if (snapshot.hasError) {
-          return const Scaffold(
-            body: Center(
+          if (snapshot.hasError || snapshot.data == null) {
+            return const Center(
               child: Text('Erreur lors de la récupération des données'),
+            );
+          }
+
+          final userData = snapshot.data!;
+
+          // Obtenir la date du jour
+          final String currentDate =
+              DateFormat.yMMMMEEEEd('fr_FR').format(DateTime.now());
+
+          return SingleChildScrollView(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 16.0),
+                // Avatar de l'utilisateur avec possibilité de modifier la photo
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60.0,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: userData.photoProfil != null
+                          ? NetworkImage(userData.photoProfil!)
+                          : null,
+                      child: userData.photoProfil == null
+                          ? Icon(
+                              Icons.person,
+                              size: 60.0,
+                              color: Colors.grey[400],
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () {
+                          //TODO: Fonction pour changer la photo de profil
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.blueAccent,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16.0),
+                // Nom de l'utilisateur
+                Text(
+                  userData.nom,
+                  style: const TextStyle(
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4.0),
+                // Email de l'utilisateur
+                Text(
+                  userData.email,
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16.0),
+                // Bouton pour éditer le profil
+                ElevatedButton(
+                  onPressed: () => _editProfile(userData),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.grey.shade100,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Modifier le profil'),
+                ),
+                const SizedBox(height: 24.0),
+                // Informations supplémentaires
+                _buildInfoSection('Informations', [
+                  _buildInfoRow(Icons.security_outlined, 'Rôle', userData.role),
+                  _buildInfoRow(
+                    Icons.calendar_today,
+                    'Date d\'inscription',
+                    DateFormat.yMMMMd('fr_FR').format(userData.dateInscription),
+                  ),
+                  _buildInfoRow(
+                    Icons.calendar_today,
+                    'Date du jour',
+                    currentDate,
+                  ),
+                ]),
+                const SizedBox(height: 24.0),
+                // Statistiques ou autres fonctionnalités
+                _buildInfoSection('Statistiques', [
+                  _buildStatRow('Articles publiés', '12'),
+                  _buildStatRow('Nombre de upvotes', '34'),
+                  _buildStatRow('Commentaires', '56'),
+                ]),
+              ],
             ),
           );
-        }
+        },
+      ),
+    );
+  }
 
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return const Scaffold(
-            body: Center(
-              child: Text('Données utilisateur non trouvées'),
-            ),
-          );
-        }
-
-        final userData = UserModel.fromDocument(snapshot.data!);
-
-        return Scaffold(
-          backgroundColor: Colors.grey[100],
-          appBar: AppBar(
-            title: const Text('Profil'),
-            backgroundColor: Colors.grey[100],
+  // Widget pour une section d'informations avec un titre
+  Widget _buildInfoSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18.0,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
           ),
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 60.0,
-                    backgroundColor: Colors.grey[300],
-                    backgroundImage: userData.photoProfil != null
-                        ? CachedNetworkImageProvider(userData.photoProfil!)
-                        : null,
-                    child: userData.photoProfil == null
-                        ? Icon(
-                            Icons.person,
-                            size: 60.0,
-                            color: Colors.grey[600],
-                          )
-                        : null,
-                  ),
-                  const SizedBox(height: 16.0),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Nom: ',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextSpan(
-                          text: userData.nom,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.normal,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Email: ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextSpan(
-                          text: userData.email,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.normal,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Rôle: ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextSpan(
-                          text: userData.role,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.normal,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+        ),
+        const SizedBox(height: 8.0),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Widget pour une ligne d'information
+  Widget _buildInfoRow(IconData icon, String title, String content) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blueAccent),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        content,
+        style: TextStyle(
+          color: Colors.grey[600],
+        ),
+      ),
+    );
+  }
+
+  // Widget pour une ligne de statistique
+  Widget _buildStatRow(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.black87,
             ),
           ),
-        );
-      },
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.blueAccent,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
