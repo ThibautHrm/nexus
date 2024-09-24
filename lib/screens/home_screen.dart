@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:nexus/services/firebase_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -8,13 +11,13 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.grey[100],
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
               icon: const Icon(Icons.person),
               onPressed: () {
-                Scaffold.of(context).openDrawer(); // Opens the Drawer
+                Scaffold.of(context).openDrawer();
               },
             );
           },
@@ -26,40 +29,43 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
       ),
       drawer: Drawer(
+        backgroundColor: Colors.grey[100],
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
+            DrawerHeader(
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: Colors.grey[100],
               ),
-              child: Text(
-                'Options',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SvgPicture.asset(
+                    'assets/images/epsilogo.svg',
+                  ),
+                ),
               ),
             ),
             ListTile(
               leading: const Icon(Icons.account_circle),
               title: const Text('Profil'),
               onTap: () {
-                Navigator.pop(context);
-                // Navigate to profile page
-              },
+                    Navigator.pushNamed(context, '/profile');
+                  },
             ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Paramètres'),
               onTap: () {
-                Navigator.pop(context);
-                // Navigate to settings page
+                Navigator.pushNamed(context, '/settings');
               },
             ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Déconnexion'),
               onTap: () {
-                Navigator.pop(context);
-                // Handle logout logic
+                FirebaseService().logout();
               },
             ),
           ],
@@ -67,19 +73,17 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Bento grid view at the top
           SizedBox(
-            height: 300, // Adjust the height as needed
+            height: 300,
             child: GridView.builder(
               scrollDirection: Axis.horizontal,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 2 rows
-                childAspectRatio: 1, // Square items
+                crossAxisCount: 2,
+                childAspectRatio: 1,
               ),
-              itemCount: 6, // Adjust the number of items in the grid
+              itemCount: 6,
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  // This is where the "Signalement" button goes
                   return GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, '/signal');
@@ -95,9 +99,9 @@ class HomeScreen extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2), // Shadow color
-                            blurRadius: 8, // Spread the blur
-                            offset: const Offset(2, 4), // Horizontal and vertical offset
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(2, 4),
                           ),
                         ],
                       ),
@@ -109,9 +113,9 @@ class HomeScreen extends StatelessWidget {
                             Icon(
                               Icons.error_rounded,
                               color: Colors.white,
-                              size: 40.0, // Adjust the size of the icon if needed
+                              size: 40.0,
                             ),
-                            SizedBox(height: 8.0), // Add space between icon and text
+                            SizedBox(height: 8.0),
                             Text(
                               "Signaler",
                               style: TextStyle(color: Colors.white, fontSize: 16),
@@ -122,21 +126,20 @@ class HomeScreen extends StatelessWidget {
                     ),
                   );
                 } else {
-                  // Other grid items with custom gradients and shadow
                   return Container(
                     margin: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       gradient: LinearGradient(
-                        colors: _getGradientColorsForIndex(index), // Custom gradient
+                        colors: _getGradientColorsForIndex(index),
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2), // Shadow color
-                          blurRadius: 8, // Spread the blur
-                          offset: const Offset(2, 4), // Horizontal and vertical offset
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(2, 4),
                         ),
                       ],
                     ),
@@ -146,11 +149,11 @@ class HomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.widgets, // Replace with any icon
+                            Icons.widgets,
                             color: Colors.white,
-                            size: 40.0, // Adjust the size of the icon if needed
+                            size: 40.0,
                           ),
-                          SizedBox(height: 8.0), // Add space between icon and text
+                          SizedBox(height: 8.0),
                           Text(
                             "Item $index",
                             style: const TextStyle(color: Colors.white, fontSize: 16),
@@ -163,7 +166,6 @@ class HomeScreen extends StatelessWidget {
               },
             ),
           ),
-          // Other content below the grid (if needed)
           Expanded(
             child: Center(
               child: Text(
@@ -177,7 +179,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Function to return custom gradient colors for each bento item
   List<Color> _getGradientColorsForIndex(int index) {
     switch (index) {
       case 1:
@@ -191,7 +192,7 @@ class HomeScreen extends StatelessWidget {
       case 5:
         return [Colors.teal, Colors.cyan];
       default:
-        return [Colors.grey, Colors.blueGrey]; // Default gradient
+        return [Colors.grey, Colors.blueGrey];
     }
   }
 }

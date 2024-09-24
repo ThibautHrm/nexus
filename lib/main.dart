@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:nexus/screens/auth_screen.dart';
 import 'package:nexus/screens/home_screen.dart';
+import 'package:nexus/screens/profil_screen.dart';
+import 'package:nexus/screens/settings_screen.dart';
 import 'package:nexus/screens/signalement_screen.dart';
 import 'package:nexus/services/firebase_service.dart';
 
@@ -28,6 +30,9 @@ class NexusApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/auth': (context) => const AuthScreen(),
         '/signal': (context) => const SignalementScreen(),
+        '/profile': (context) => const ProfilScreen(),
+        '/settings': (context) => const SettingsScreen(),
+
       },
     );
   }
