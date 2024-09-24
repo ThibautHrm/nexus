@@ -10,10 +10,14 @@ class HomeScreen extends StatelessWidget {
         title: const Text("Nexus"),
         centerTitle: true,
       ),
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Column(
           children: [
-            Text("Nexus application"),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/signal');
+                },
+                child: const Text("Signalement"))
           ],
         ),
       ),
