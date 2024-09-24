@@ -33,25 +33,32 @@ class AuthScreenState extends State<AuthScreen> {
       _formKey.currentState?.save();
       try {
         if (isLogin) {
-          // Utilise le fichier FirebaseService pour la connexion
           await _firebaseService.login(email, password);
-          // TODO: Faire la navigation vers la page d'accueil
+          // Naviguer vers la page d'accueil
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         } else {
           if (password != confirmPassword) {
-            setState(() {
-              errorMessage = 'Les mots de passe ne correspondent pas.';
-            });
+            if (mounted) {
+              setState(() {
+                errorMessage = 'Les mots de passe ne correspondent pas.';
+              });
+            }
             return;
           }
-          // Utilise le fichier FirebaseService pour l'inscription
           await _firebaseService.signUp(email, password, nom);
-
-          /// TODO: Faire la navigation vers la page d'accueil
+          // Naviguer vers la page d'accueil
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         }
       } catch (e) {
-        setState(() {
-          errorMessage = e.toString();
-        });
+        if (mounted) {
+          setState(() {
+            errorMessage = e.toString();
+          });
+        }
       }
     }
   }
@@ -78,9 +85,11 @@ class AuthScreenState extends State<AuthScreen> {
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () {
-                        setState(() {
-                          errorMessage = '';
-                        });
+                        if (mounted) {
+                          setState(() {
+                            errorMessage = '';
+                          });
+                        }
                       },
                     )
                   ],
