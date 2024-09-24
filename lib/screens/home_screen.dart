@@ -1,6 +1,5 @@
-// lib/screens/home_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:nexus/models/news_model.dart';
 import 'package:nexus/screens/create_news_screen.dart';
 import 'package:nexus/screens/news_details_screen.dart';
@@ -152,7 +151,7 @@ class HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.grey[100],
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
@@ -176,53 +175,43 @@ class HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
       ),
       drawer: Drawer(
+        backgroundColor: Colors.grey[100],
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
+            DrawerHeader(
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: Colors.grey[100],
               ),
-              child: Text(
-                'Options',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SvgPicture.asset(
+                    'assets/images/epsilogo.svg',
+                  ),
+                ),
               ),
             ),
             ListTile(
               leading: const Icon(Icons.account_circle),
               title: const Text('Profil'),
               onTap: () {
-                Navigator.pop(context);
-                // TODO: Navigation vers la page de profil
+                Navigator.pushNamed(context, '/profile');
               },
             ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Paramètres'),
               onTap: () {
-                Navigator.pop(context);
-                // TODO: Navigation vers la page de paramètres
+                Navigator.pushNamed(context, '/settings');
               },
             ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Déconnexion'),
               onTap: () {
-                Navigator.pop(context);
                 FirebaseService().logout();
-                // TODO: Gérer la déconnexion
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.post_add),
-              title: const Text('Ajouter une news'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AddNewsScreen()),
-                );
               },
             ),
           ],
