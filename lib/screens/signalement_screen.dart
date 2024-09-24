@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:nexus/models/signalement_model.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:nexus/screens/create_signalement_screen.dart';
@@ -54,19 +55,24 @@ class SignalementScreenState extends State<SignalementScreen> {
   void _showSignalementDetails(SignalementModel signalement) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return SignalementDetailsModal(
           signalement: signalement,
           isEditable: _currentUser?.uid == signalement.auteurId,
+          isStaff: _currentUser?.role == 'staff',
           onDelete: () {
             _deleteSignalement(signalement.id);
+            Navigator.pop(context);
           },
           onEdit: () {
             _editSignalement(signalement);
           },
         );
       },
-    );
+    ).then((_) {
+      _loadSignalements();
+    });
   }
 
   Future<void> _deleteSignalement(String id) async {
@@ -94,6 +100,10 @@ class SignalementScreenState extends State<SignalementScreen> {
         return Icons.security;
       case 'maintenance':
         return Icons.build;
+      case 'harcèlement':
+        return Icons.report_gmailerrorred;
+      case 'autre':
+        return Icons.help_outline;
       default:
         return Icons.report_problem;
     }
@@ -110,6 +120,10 @@ class SignalementScreenState extends State<SignalementScreen> {
       default:
         return Colors.grey;
     }
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(date);
   }
 
   @override
@@ -140,7 +154,7 @@ class SignalementScreenState extends State<SignalementScreen> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                            'Catégorie: ${signalement.categorie}\nDate: ${signalement.dateCreation.toLocal()}'),
+                            'Catégorie: ${signalement.categorie}\nDate: ${_formatDate(signalement.dateCreation)}'),
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),

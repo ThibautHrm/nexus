@@ -84,6 +84,7 @@ class FirebaseService {
         .update(user.toMap());
   }
 
+  // Supprimer un utilisateur
   Future<void> deleteUser(String uid) async {
     await _firestore.collection('utilisateurs').doc(uid).delete();
   }
@@ -152,6 +153,14 @@ class FirebaseService {
       return SignalementModel.fromDocument(doc);
     }
     return null;
+  }
+
+  // Mise à jour du statut d'un signalement
+  Future<void> updateSignalementStatut(
+      String signalementId, String newStatut) async {
+    await _firestore.collection('signalements').doc(signalementId).update({
+      'statut': newStatut,
+    });
   }
 
   // Récupérer les signalements d'un utilisateurs
