@@ -365,27 +365,30 @@ class HomeScreenState extends State<HomeScreen> {
     return FittedBox(
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 40),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontFamily: "Questrial",
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: "Questrial",
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -458,22 +461,28 @@ class HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
                   // Section des 3 boutons carrés
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildActionButton("Signaler",
-                          Icons.assistant_photo_rounded, AppColors.primary, () {
-                        Navigator.pushNamed(context, '/signal');
-                      }),
-                      _buildActionButton("Nouvelles", Icons.newspaper_rounded,
-                          AppColors.primary, () {
-                        Navigator.pushNamed(context, '/createNews');
-                      }),
-                      _buildActionButton("Planning",
-                          Icons.calendar_month_rounded, AppColors.primary, () {
-                        // Action pour le placeholder
-                      }),
-                    ],
+                  FittedBox(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildActionButton(
+                            "Signaler",
+                            Icons.assistant_photo_rounded,
+                            AppColors.primary, () {
+                          Navigator.pushNamed(context, '/signal');
+                        }),
+                        _buildActionButton("Nouvelles", Icons.newspaper_rounded,
+                            AppColors.primary, () {
+                          Navigator.pushNamed(context, '/createNews');
+                        }),
+                        _buildActionButton(
+                            "Planning",
+                            Icons.calendar_month_rounded,
+                            AppColors.primary, () {
+                          // Action pour le placeholder
+                        }),
+                      ],
+                    ),
                   ),
                 ],
               ),

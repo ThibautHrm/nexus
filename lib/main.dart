@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import pour gérer l'orientation
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:nexus/screens/auth_screen.dart';
@@ -12,9 +13,18 @@ import 'package:nexus/services/firebase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialiser Firebase et Intl
   await Firebase.initializeApp();
   await initializeDateFormatting('fr', null);
-  runApp(const NexusApp());
+
+  // Verrouiller l'application en mode portrait uniquement
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(const NexusApp());
+  });
 }
 
 class NexusApp extends StatelessWidget {
@@ -37,7 +47,7 @@ class NexusApp extends StatelessWidget {
         '/profile': (context) => const ProfilScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/createNews': (context) => const AddNewsScreen(),
-        '/group': (context) => const GroupScreen()
+        '/group': (context) => const GroupScreen(),
       },
     );
   }
@@ -52,17 +62,14 @@ class MainPage extends StatelessWidget {
       stream: FirebaseService().authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // Affiche un indicateur de progression pendant le chargement
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
             ),
           );
         } else if (snapshot.hasData) {
-          // Si l'utilisateur est connecté, affiche l'écran principal
           return const HomeScreen();
         } else {
-          // Sinon, affiche l'écran d'authentification
           return const AuthScreen();
         }
       },
