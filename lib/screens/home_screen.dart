@@ -80,10 +80,8 @@ class HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _newsList = [];
-        _isLoading = false;
-      });
+      _newsList = [];
+      _isLoading = false;
     }
   }
 
@@ -336,6 +334,48 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             );
+          }
+          if (index == 2) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/group');
+              },
+              child: Container(
+                margin: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: const LinearGradient(
+                    colors: [Colors.blue, Colors.blueAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(2, 4),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.newspaper_rounded,
+                        color: Colors.white,
+                        size: 40.0,
+                      ),
+                      SizedBox(height: 8.0),
+                      Text(
+                        "Forum",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
           } else {
             return Container(
               margin: const EdgeInsets.all(8.0),
@@ -460,12 +500,8 @@ class HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              // Action pour le bouton de déconnexion
-              FirebaseService().logout();
-              Navigator.pushReplacementNamed(context, '/auth');
-            },
-            icon: const Icon(Icons.logout_rounded),
+            onPressed: () {},
+            icon: const Icon(Icons.more_horiz),
           ),
         ],
         title: const Text(
@@ -479,8 +515,9 @@ class HomeScreenState extends State<HomeScreen> {
         children: [
           const SizedBox(height: 10),
           _buildTopGrid(),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
           _buildEmplacementFilter(),
+          const SizedBox(height: 20),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())

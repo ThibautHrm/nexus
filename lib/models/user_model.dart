@@ -7,6 +7,9 @@ class UserModel {
   DateTime dateInscription;
   String? photoProfil;
   String role;
+  int nombreDePosts;
+  int nombreDeUpvotesRecus;
+  int nombreDeCommentaires;
 
   UserModel({
     required this.uid,
@@ -15,6 +18,9 @@ class UserModel {
     required this.dateInscription,
     this.photoProfil,
     this.role = 'étudiant',
+    this.nombreDePosts = 0,
+    this.nombreDeUpvotesRecus = 0,
+    this.nombreDeCommentaires = 0,
   });
 
   // Convertit l'objet en Map pour Firestore
@@ -26,6 +32,9 @@ class UserModel {
       'dateInscription': dateInscription,
       'photoProfil': photoProfil,
       'role': role,
+      'nombreDePosts': nombreDePosts,
+      'nombreDeUpvotesRecus': nombreDeUpvotesRecus,
+      'nombreDeCommentaires': nombreDeCommentaires,
     };
   }
 
@@ -39,6 +48,9 @@ class UserModel {
       dateInscription: (data['dateInscription'] as Timestamp).toDate(),
       photoProfil: data['photoProfil'],
       role: data['role'] ?? 'étudiant',
+      nombreDePosts: data['nombreDePosts'] ?? 0,
+      nombreDeUpvotesRecus: data['nombreDeUpvotesRecus'] ?? 0,
+      nombreDeCommentaires: data['nombreDeCommentaires'] ?? 0,
     );
   }
 }
