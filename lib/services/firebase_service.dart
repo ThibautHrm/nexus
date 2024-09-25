@@ -371,6 +371,29 @@ class FirebaseService {
     });
   }
 
+  // Supprimer un commentaire dans un post
+  Future<void> deleteComment(
+      String groupId, String postId, String commentId) async {
+    DocumentReference commentRef = _firestore
+        .collection('groups')
+        .doc(groupId)
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId);
+
+    await commentRef.delete(); // Suppression du commentaire
+  }
+
+  // Décrémente le nombre de commentaires d'un utilisateur
+  Future<void> decrementUserCommentCount(String userId) async {
+    DocumentReference userRef =
+        _firestore.collection('utilisateurs').doc(userId);
+    await userRef.update({
+      'nombreDeCommentaires': FieldValue.increment(-1),
+    });
+  }
+
 // Upvote ou dé-upvote un commentaire
   Future<void> toggleUpvoteComment(
       String groupId, String postId, String commentId, String userId) async {
@@ -470,5 +493,58 @@ class FirebaseService {
       'upvotedBy': post.upvotedBy,
       'upvotes': post.upvotes,
     });
+  }
+
+  // Supprimer un post et tous ses commentaires, ainsi que l'image associée dans Firebase Storage,
+// et mettre à jour les statistiques de l'utilisateur
+  Future<void> deletePostWithCommentsAndImage(
+      String groupId, PostModel post) async {
+    try {
+      // Récupérer les détails de l'utilisateur qui a créé le post
+      UserModel? user = await getUser(post.auteurUid);
+
+      if (user != null) {
+        // Supprimer tous les commentaires associés au post et décrémenter le nombre de commentaires de l'utilisateur
+        QuerySnapshot commentSnapshot = await _firestore
+            .collection('groups')
+            .doc(groupId)
+            .collection('posts')
+            .doc(post.id)
+            .collection('comments')
+            .get();
+
+        for (var doc in commentSnapshot.docs) {
+          // Pour chaque commentaire, décrémenter le nombre de commentaires de l'utilisateur
+          CommentModel comment = CommentModel.fromDocument(doc);
+          await decrementUserCommentCount(comment.auteurUid);
+
+          // Supprimer le commentaire
+          await doc.reference.delete();
+        }
+
+        // Supprimer l'image du post si elle existe
+        if (post.imageUrl.isNotEmpty) {
+          Reference imageRef =
+              FirebaseStorage.instance.refFromURL(post.imageUrl);
+          await imageRef.delete();
+        }
+
+        // Mettre à jour les statistiques de l'utilisateur : décrémenter le nombre de posts et les upvotes reçus
+        await _firestore.collection('utilisateurs').doc(user.uid).update({
+          'nombreDePosts': FieldValue.increment(-1),
+          'nombreDeUpvotesRecus': FieldValue.increment(-post.upvotes),
+        });
+
+        // Supprimer le post lui-même
+        await _firestore
+            .collection('groups')
+            .doc(groupId)
+            .collection('posts')
+            .doc(post.id)
+            .delete();
+      }
+    } catch (e) {
+      throw Exception("Erreur lors de la suppression du post : $e");
+    }
   }
 }

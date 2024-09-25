@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
-import 'package:nexus/models/post_model.dart';
+import 'package:intl/intl.dart';
 import 'package:nexus/models/comment_model.dart';
+import 'package:nexus/models/post_model.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final PostModel post;
@@ -22,7 +24,6 @@ class PostDetailScreenState extends State<PostDetailScreen> {
   bool _isLoading = true;
   String _commentContent = '';
   final TextEditingController _commentController = TextEditingController();
-  // Vérifie si déjà liké par l'utilisateur
   bool isUpvotedPost = false;
 
   @override
@@ -38,7 +39,6 @@ class PostDetailScreenState extends State<PostDetailScreen> {
       List<CommentModel> comments = await _firebaseService.getCommentsForPost(
           widget.groupId, widget.post.id);
 
-      // Récupère les données utilisateurs et photo de profil pour chaque commentaires
       List<Map<String, dynamic>> commentDataList = [];
       for (var comment in comments) {
         UserModel? user = await _firebaseService.getUser(comment.auteurUid);
@@ -84,7 +84,7 @@ class PostDetailScreenState extends State<PostDetailScreen> {
   Future<void> _toggleUpvoteComment(String commentId, String userId) async {
     await _firebaseService.toggleUpvoteComment(
         widget.groupId, widget.post.id, commentId, userId);
-    _loadComments(); // Rafraîchit les commentaires après un upvote
+    _loadComments();
   }
 
   Future<void> _toggleUpvotePost() async {
@@ -96,66 +96,178 @@ class PostDetailScreenState extends State<PostDetailScreen> {
     });
   }
 
-  // Widget pour chaque commentaire
+  Future<void> _confirmDeleteComment(
+      String commentId, String userId, CommentModel comment) async {
+    final confirmation = await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text(
+            "Confirmation de suppression",
+            style:
+                TextStyle(fontFamily: 'Questrial', fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            "Voulez-vous vraiment supprimer ce commentaire ?",
+            style: TextStyle(fontFamily: 'Questrial'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                "Annuler",
+                style: TextStyle(
+                    fontFamily: 'Questrial', color: AppColors.secondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                "Supprimer",
+                style: TextStyle(fontFamily: 'Questrial', color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmation == true) {
+      await _deleteComment(commentId, userId, comment);
+    }
+  }
+
+  Future<void> _deleteComment(
+      String commentId, String userId, CommentModel comment) async {
+    await _firebaseService.deleteComment(
+        widget.groupId, widget.post.id, commentId);
+    await _firebaseService.decrementUserCommentCount(userId);
+    _loadComments();
+  }
+
   Widget _buildCommentItem(
       Map<String, dynamic> commentData, bool isCurrentUser) {
     CommentModel comment = commentData['comment'];
     UserModel user = commentData['user'];
-
     bool isUpvoted =
         comment.upvotedBy.contains(_firebaseService.getCurrentUser()!.uid);
 
-    return Align(
-      alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+    return GestureDetector(
+      onLongPress: isCurrentUser
+          ? () => _confirmDeleteComment(comment.id, user.uid, comment)
+          : null,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: isCurrentUser ? Colors.blue[50] : Colors.white,
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundImage: user.photoProfil != null
-                ? NetworkImage(user.photoProfil!)
-                : null,
-            child: user.photoProfil == null
-                ? const Icon(Icons.person, color: Colors.grey)
-                : null,
-          ),
-          title: Text(
-            user.nom,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Column(
+        elevation: 1,
+        color: isCurrentUser
+            ? AppColors.primary.withOpacity(0.1)
+            : Colors.grey.shade100,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(comment.contenu),
-              const SizedBox(height: 4.0),
+              // Header: User information and date
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundImage: user.photoProfil != null
+                        ? NetworkImage(user.photoProfil!)
+                        : null,
+                    radius: 20,
+                    child: user.photoProfil == null
+                        ? const Icon(Icons.person, color: Colors.grey)
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.nom,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            fontFamily: 'Questrial',
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('dd MMM yyyy à HH:mm')
+                              .format(comment.dateCreation),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'Questrial',
+                            color: isCurrentUser
+                                ? AppColors.textDark
+                                : Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Comment content
               Text(
-                DateFormat('dd MMM yyyy à HH:mm').format(comment.dateCreation),
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                comment.contenu,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Questrial',
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Likes and share
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.thumb_up_alt_rounded,
+                          color: isUpvoted
+                              ? (isCurrentUser ? Colors.white : Colors.green)
+                              : (isCurrentUser ? Colors.white : Colors.grey),
+                        ),
+                        onPressed: () {
+                          _toggleUpvoteComment(comment.id,
+                              _firebaseService.getCurrentUser()!.uid);
+                        },
+                      ),
+                      Text(
+                        "${comment.upvotes}",
+                        style: const TextStyle(
+                          fontFamily: 'Questrial',
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.share,
+                      color: isCurrentUser ? Colors.white : AppColors.primary,
+                    ),
+                    onPressed: () {
+                      Share.share(comment.contenu);
+                    },
+                  ),
+                ],
               ),
             ],
-          ),
-          trailing: FittedBox(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  iconSize: 25,
-                  icon: Icon(
-                    Icons.thumb_up,
-                    color: isUpvoted ? Colors.blue : Colors.grey,
-                  ),
-                  onPressed: () {
-                    _toggleUpvoteComment(
-                        comment.id, _firebaseService.getCurrentUser()!.uid);
-                  },
-                ),
-                Text(
-                  "${comment.upvotes}",
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -164,22 +276,25 @@ class PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
           widget.post.titre,
           style: const TextStyle(
-              color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
+            fontFamily: 'Questrial',
+            color: AppColors.textDark,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: AppColors.backgroundLight,
         actions: [
           IconButton(
             icon: Icon(
-              Icons.thumb_up,
-              color: isUpvotedPost ? Colors.blue : Colors.black,
-              size: 24,
+              Icons.thumb_up_alt_rounded,
+              color: isUpvotedPost ? Colors.green : Colors.grey,
             ),
             onPressed: _toggleUpvotePost,
           ),
@@ -189,76 +304,112 @@ class PostDetailScreenState extends State<PostDetailScreen> {
               child: Text(
                 "${widget.post.upvotes}",
                 style: const TextStyle(
-                    color: Colors.black, fontWeight: FontWeight.bold),
+                  fontFamily: 'Questrial',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.textDark,
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Description du post
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: EdgeInsets.only(bottom: bottomInset + 80),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 4,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.post.imageUrl.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(widget.post.imageUrl),
+                          ),
+                        const SizedBox(height: 12),
+                        Text(
+                          widget.post.description,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Questrial',
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          DateFormat('dd MMM yyyy à HH:mm')
+                              .format(widget.post.dateCreation),
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                            fontFamily: 'Questrial',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (widget.post.imageUrl.isNotEmpty)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(widget.post.imageUrl),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (_commentList.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text(
+                        "Aucun commentaire pour le moment.",
+                        style: TextStyle(fontFamily: 'Questrial'),
                       ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.post.description,
-                      style:
-                          const TextStyle(fontSize: 16, color: Colors.black87),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      DateFormat('dd MMM yyyy à HH:mm')
-                          .format(widget.post.dateCreation),
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _commentList.length,
+                    itemBuilder: (context, index) {
+                      bool isCurrentUser = _commentList[index]['user'].uid ==
+                          _firebaseService.getCurrentUser()!.uid;
+                      return _buildCommentItem(
+                          _commentList[index], isCurrentUser);
+                    },
+                  ),
+              ],
             ),
-            // Liste des commentaires
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (_commentList.isEmpty)
-              const Center(child: Text("Aucun commentaire."))
-            else
-              ListView.builder(
-                shrinkWrap: true, // Limite la taille de la listeview
-                physics:
-                    const NeverScrollableScrollPhysics(), // Désactive le scroll dans la listview
-                itemCount: _commentList.length,
-                itemBuilder: (context, index) {
-                  bool isCurrentUser = _commentList[index]['user'].uid ==
-                      _firebaseService.getCurrentUser()!.uid;
-                  return _buildCommentItem(_commentList[index], isCurrentUser);
-                },
-              ),
-            // Champs de saisie de commentaire
-            Padding(
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              color: AppColors.backgroundLight,
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
+                      controller: _commentController,
                       decoration: InputDecoration(
-                        labelText: 'Commenter',
+                        hintText: "Commenter...",
                         filled: true,
-                        fillColor: Colors.grey[200],
+                        fillColor: Colors.grey.shade100,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -269,18 +420,21 @@ class PostDetailScreenState extends State<PostDetailScreen> {
                           _commentContent = value;
                         });
                       },
-                      controller: _commentController,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send, color: Colors.blue),
+                    icon: const Icon(
+                      Icons.send,
+                      color: AppColors.primary,
+                      size: 32,
+                    ),
                     onPressed: _addComment,
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

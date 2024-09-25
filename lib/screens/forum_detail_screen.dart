@@ -73,16 +73,37 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Confirmation de suppression"),
-          content: const Text("Voulez-vous vraiment supprimer ce post ?"),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text(
+            "Confirmation de suppression",
+            style:
+                TextStyle(fontFamily: 'Questrial', fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            "Voulez-vous vraiment supprimer ce post et ses commentaires associés ?",
+            style: TextStyle(fontFamily: 'Questrial'),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text("Annuler"),
+              child: const Text(
+                "Annuler",
+                style: TextStyle(
+                    fontFamily: 'Questrial', color: AppColors.secondary),
+              ),
             ),
-            TextButton(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Supprimer"),
+              child: const Text(
+                "Supprimer",
+                style: TextStyle(fontFamily: 'Questrial', color: Colors.white),
+              ),
             ),
           ],
         );
@@ -90,7 +111,8 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
     );
 
     if (confirmation == true) {
-      await _firebaseService.deletePost(widget.group.id, post.id);
+      await _firebaseService.deletePostWithCommentsAndImage(
+          widget.group.id, post);
       _loadPosts();
     }
   }

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nexus/models/post_model.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart'; // Pour les couleurs globales
 
 class AddPostScreen extends StatefulWidget {
   final String groupId;
@@ -95,11 +96,19 @@ class AddPostScreenState extends State<AddPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text("Ajouter un post"),
+        title: const Text(
+          "Ajouter un post",
+          style: TextStyle(
+            fontFamily: 'Questrial',
+            color: AppColors.textDark,
+          ),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: AppColors.backgroundLight,
+        iconTheme: const IconThemeData(color: AppColors.textDark),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -111,9 +120,16 @@ class AddPostScreenState extends State<AddPostScreen> {
               // Champ de saisie pour le titre du post
               TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'Titre du post',
+                  hintText: 'Titre du post',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Questrial',
+                    color: Colors.grey,
                   ),
                 ),
                 onSaved: (value) {
@@ -130,9 +146,16 @@ class AddPostScreenState extends State<AddPostScreen> {
               // Champ de saisie pour la description du post
               TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'Description',
+                  hintText: 'Description',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Questrial',
+                    color: Colors.grey,
                   ),
                 ),
                 onSaved: (value) {
@@ -150,9 +173,16 @@ class AddPostScreenState extends State<AddPostScreen> {
               // Dropdown pour la sélection des tags
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(
-                  labelText: 'Tag',
+                  hintText: 'Tag',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Questrial',
+                    color: Colors.grey,
                   ),
                 ),
                 value: _selectedTag,
@@ -198,13 +228,22 @@ class AddPostScreenState extends State<AddPostScreen> {
                   : const Text(
                       'Aucune image sélectionnée',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(
+                        fontFamily: 'Questrial',
+                        color: AppColors.textDark,
+                      ),
                     ),
               const SizedBox(height: 10),
               // Bouton pour choisir une image
               TextButton.icon(
-                icon: const Icon(Icons.image, color: Colors.blue),
-                label: const Text('Choisir une image'),
+                icon: const Icon(Icons.image, color: AppColors.primary),
+                label: const Text(
+                  'Choisir une image',
+                  style: TextStyle(
+                    fontFamily: 'Questrial',
+                    color: AppColors.primary,
+                  ),
+                ),
                 onPressed: _pickImage,
               ),
               const SizedBox(height: 20),
@@ -222,8 +261,11 @@ class AddPostScreenState extends State<AddPostScreen> {
                         style: TextStyle(color: Colors.grey.shade100),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
             ],

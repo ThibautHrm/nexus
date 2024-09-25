@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/models/group_model.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart'; // Assurez-vous d'utiliser le fichier de couleurs global
 
 class AddGroupScreen extends StatefulWidget {
   const AddGroupScreen({super.key});
@@ -55,9 +56,19 @@ class AddGroupScreenState extends State<AddGroupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text("Ajouter un groupe"),
+        title: const Text(
+          "Ajouter un groupe",
+          style: TextStyle(
+            fontFamily: 'Questrial',
+            color: AppColors.textDark,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: AppColors.backgroundLight,
+        iconTheme: const IconThemeData(color: AppColors.textDark),
+        elevation: 0, // Supprime l'ombre sous l'appbar
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -65,8 +76,21 @@ class AddGroupScreenState extends State<AddGroupScreen> {
           key: _formKey,
           child: Column(
             children: [
+              // Champ pour le nom du groupe
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Nom du groupe'),
+                decoration: InputDecoration(
+                  hintText: 'Nom du groupe',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Questrial',
+                    color: Colors.grey,
+                  ),
+                ),
                 onSaved: (value) {
                   _groupName = value!;
                 },
@@ -77,8 +101,23 @@ class AddGroupScreenState extends State<AddGroupScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
+              // Champ pour la description du groupe
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: InputDecoration(
+                  hintText: 'Description',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Questrial',
+                    color: Colors.grey,
+                  ),
+                ),
+                maxLines: 3, // Permettre plus de lignes pour la description
                 onSaved: (value) {
                   _groupDescription = value!;
                 },
@@ -89,12 +128,28 @@ class AddGroupScreenState extends State<AddGroupScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
+              // Bouton de validation
               _isLoading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
                       onPressed: _submitGroup,
-                      child: const Text('Créer le groupe'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 24),
+                      ),
+                      child: const Text(
+                        'Créer le groupe',
+                        style: TextStyle(
+                          fontFamily: 'Questrial',
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
             ],
           ),
