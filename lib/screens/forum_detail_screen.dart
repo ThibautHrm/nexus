@@ -5,6 +5,7 @@ import 'package:nexus/models/user_model.dart';
 import 'package:nexus/screens/add_post_screen.dart';
 import 'package:nexus/screens/post_detail_screen.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final GroupModel group;
@@ -63,7 +64,6 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
     );
 
     if (result == true) {
-      // Rafraîchir les posts après ajout
       _loadPosts();
     }
   }
@@ -91,14 +91,12 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
 
     if (confirmation == true) {
       await _firebaseService.deletePost(widget.group.id, post.id);
-      // Rafraîchir les posts après suppression
       _loadPosts();
     }
   }
 
   // Gestion de l'overflow du texte avec des "..."
   String _getShortDescription(String description) {
-    // Limite réduite pour compacter la description
     const int maxLength = 80;
     return description.length > maxLength
         ? '${description.substring(0, maxLength)}...'
@@ -109,7 +107,7 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
   Map<String, dynamic> _getTagProperties(String tag) {
     switch (tag) {
       case 'WIS':
-        return {'color': Colors.blueAccent, 'icon': Icons.school};
+        return {'color': AppColors.primary, 'icon': Icons.school};
       case 'DEVOPS':
         return {'color': Colors.green, 'icon': Icons.computer};
       case 'SYSOPS':
@@ -131,9 +129,7 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
     final tagProperties = _getTagProperties(post.tag);
 
     return GestureDetector(
-      onLongPress: isAuthor
-          ? () => _deletePost(post) // Supprimer si l'utilisateur est l'auteur
-          : null,
+      onLongPress: isAuthor ? () => _deletePost(post) : null,
       onTap: () => _navigateToPostDetail(post),
       child: Card(
         elevation: 4,
@@ -143,87 +139,91 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
           height: 150,
           child: Row(
             children: [
-              // Image à gauche, fixe en largeur et hauteur ajustée
+              // Image à gauche, taille fixe et ajustée avec BoxFit.cover
               if (post.imageUrl.isNotEmpty)
-                SizedBox(
+                Container(
                   height: 150,
-                  width: 90,
-                  child: ClipRRect(
+                  width: 150,
+                  decoration: BoxDecoration(
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       bottomLeft: Radius.circular(12),
                     ),
-                    child: Image.network(
-                      post.imageUrl,
-                      fit: BoxFit.cover,
+                    image: DecorationImage(
+                      image: NetworkImage(post.imageUrl),
+                      fit: BoxFit.cover, // Image ajustée sans overflow
                     ),
                   ),
                 ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 10.0,
-                  ),
+                  padding: const EdgeInsets.all(12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Titre du post
-                      Text(
-                        post.titre,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.0,
-                          color: Colors.black87,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          post.titre,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.0,
+                            color: Colors.black87,
+                            fontFamily: "Questrial",
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      // Auteur du post (avec photo de profil)
-                      FutureBuilder<UserModel?>(
-                        future: _firebaseService.getUser(post.auteurUid),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            UserModel user = snapshot.data!;
-                            return Row(
-                              children: [
-                                CircleAvatar(
-                                  backgroundImage: user.photoProfil != null
-                                      ? NetworkImage(user.photoProfil!)
-                                      : null,
-                                  radius: 10,
-                                  child: user.photoProfil == null
-                                      ? const Icon(Icons.person, size: 20)
-                                      : null,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  user.nom,
-                                  style: TextStyle(
-                                    fontSize: 12.0,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                          return const Text('Chargement...');
-                        },
+                      Row(
+                        children: [
+                          // Auteur du post (avec photo de profil)
+                          FutureBuilder<UserModel?>(
+                            future: _firebaseService.getUser(post.auteurUid),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                UserModel user = snapshot.data!;
+                                return Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage: user.photoProfil != null
+                                          ? NetworkImage(user.photoProfil!)
+                                          : null,
+                                      radius: 10,
+                                      child: user.photoProfil == null
+                                          ? const Icon(Icons.person, size: 20)
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      user.nom,
+                                      style: TextStyle(
+                                        fontSize: 12.0,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                              return const Text('Chargement...');
+                            },
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      // Extrait de la description avec "..."
+                      // Extrait de la description
                       Text(
                         _getShortDescription(post.description),
                         style: const TextStyle(
                           fontSize: 12.0,
                           color: Colors.black87,
+                          fontFamily: "Questrial",
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          // Tag du post avec couleur et icône basé sur le tag du post
+                          // Tag du post
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8.0,
@@ -242,10 +242,11 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  post.tag, // Utilisation du tag du post
+                                  post.tag,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 12.0,
+                                    fontFamily: "Questrial",
                                   ),
                                 ),
                               ],
@@ -259,7 +260,7 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
                                 Icons.thumb_up,
                                 color: post.upvotedBy.contains(
                                         _firebaseService.getCurrentUser()!.uid)
-                                    ? Colors.blueAccent
+                                    ? Colors.green
                                     : Colors.grey,
                                 size: 16,
                               ),
@@ -283,15 +284,30 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: Text(widget.group.nom),
+        title: Text(
+          widget.group.nom,
+          style: const TextStyle(
+            fontFamily: "Questrial",
+            color: AppColors.textDark,
+          ),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: AppColors.backgroundLight,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _postList.isEmpty
-              ? const Center(child: Text("Aucun post disponible."))
+              ? const Center(
+                  child: Text(
+                    "Aucun post disponible.",
+                    style: TextStyle(
+                      fontFamily: "Questrial",
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                )
               : ListView.builder(
                   itemCount: _postList.length,
                   itemBuilder: (context, index) {
@@ -300,7 +316,8 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddPost,
-        child: const Icon(Icons.add),
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
