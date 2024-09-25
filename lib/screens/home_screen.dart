@@ -479,6 +479,23 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            const Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: Text(
+                    "Les News",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontFamily: "Questrial",
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
             _buildEmplacementFilter(),
             const SizedBox(height: 20),
             _isLoading

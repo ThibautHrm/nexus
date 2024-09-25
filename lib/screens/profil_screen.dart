@@ -45,6 +45,12 @@ class ProfilScreenState extends State<ProfilScreen> {
     }
   }
 
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/auth');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (user == null) {
@@ -212,6 +218,31 @@ class ProfilScreenState extends State<ProfilScreen> {
                   _buildStatRow(
                       'Commentaires', userData.nombreDeCommentaires.toString()),
                 ]),
+                const SizedBox(height: 40),
+                // Bouton de déconnexion
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _logout,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                            8), // Réduction de l'arrondi à 8
+                      ),
+                    ),
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    label: const Text(
+                      'Déconnexion',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        fontFamily: "Questrial",
+                        color: AppColors.backgroundLight,
+                      ),
+                    ),
+                  ),
+                )
               ],
             ),
           );

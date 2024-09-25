@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart'; // Import du package
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -10,15 +12,17 @@ class AuthScreen extends StatefulWidget {
 
 class AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
+  bool isLoading = false; // Pour gérer l'état de chargement
   final _formKey = GlobalKey<FormState>();
-
   String email = '';
   String password = '';
   String confirmPassword = '';
   String nom = '';
   String errorMessage = '';
-
   final FirebaseService _firebaseService = FirebaseService();
+
+  int _nexusClickCount = 0;
+  bool _showGifBackground = false;
 
   void toggleForm() {
     setState(() {
@@ -31,10 +35,13 @@ class AuthScreenState extends State<AuthScreen> {
     final isValid = _formKey.currentState?.validate();
     if (isValid != null && isValid) {
       _formKey.currentState?.save();
+      setState(() {
+        isLoading = true; // Commencer le chargement
+      });
+
       try {
         if (isLogin) {
           await _firebaseService.login(email, password);
-          // Naviguer vers la page d'accueil
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/home');
           }
@@ -45,10 +52,12 @@ class AuthScreenState extends State<AuthScreen> {
                 errorMessage = 'Les mots de passe ne correspondent pas.';
               });
             }
+            setState(() {
+              isLoading = false; // Fin du chargement en cas d'erreur
+            });
             return;
           }
           await _firebaseService.signUp(email, password, nom);
-          // Naviguer vers la page d'accueil
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/home');
           }
@@ -59,54 +68,67 @@ class AuthScreenState extends State<AuthScreen> {
             errorMessage = e.toString();
           });
         }
+      } finally {
+        setState(() {
+          isLoading = false; // Fin du chargement après l'opération
+        });
       }
+    }
+  }
+
+  void _onNexusTitleTap() {
+    _nexusClickCount++;
+    if (_nexusClickCount == 5) {
+      setState(() {
+        _showGifBackground = true;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Taille de l'écran pour un design réactif
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       body: Stack(
         children: [
-          // Image de fond
-          Container(
-            height: size.height,
-            width: size.width,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.gif'),
-                fit: BoxFit.cover,
+          if (_showGifBackground)
+            Container(
+              height: size.height,
+              width: size.width,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/background.gif'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
-
-          Container(
-            height: size.height,
-            width: size.width,
-            color: Colors.black.withOpacity(0.2),
-          ),
-          // Contenu principal
+          if (_showGifBackground)
+            Container(
+              height: size.height,
+              width: size.width,
+              color: Colors.black.withOpacity(0.2),
+            ),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo ou titre de l'application
-                  const Text(
-                    'Nexus',
-                    style: TextStyle(
-                      fontFamily: 'Questrial',
-                      fontSize: 48.0,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: _onNexusTitleTap,
+                    child: const Text(
+                      'Nexus',
+                      style: TextStyle(
+                        fontFamily: 'Questrial',
+                        fontSize: 48.0,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),
-                  // Formulaire dans une Card
                   Card(
                     color: Colors.white.withOpacity(0.9),
                     shape: RoundedRectangleBorder(
@@ -157,6 +179,10 @@ class AuthScreenState extends State<AuthScreen> {
                               TextFormField(
                                 decoration: const InputDecoration(
                                   labelText: 'Nom complet',
+                                  labelStyle: TextStyle(
+                                    color: AppColors.secondary,
+                                    fontFamily: "Questrial",
+                                  ),
                                   prefixIcon: Icon(Icons.person),
                                 ),
                                 onSaved: (value) => nom = value!.trim(),
@@ -173,6 +199,10 @@ class AuthScreenState extends State<AuthScreen> {
                             TextFormField(
                               decoration: const InputDecoration(
                                 labelText: 'Email',
+                                labelStyle: TextStyle(
+                                  color: AppColors.secondary,
+                                  fontFamily: "Questrial",
+                                ),
                                 prefixIcon: Icon(Icons.email),
                               ),
                               keyboardType: TextInputType.emailAddress,
@@ -191,6 +221,10 @@ class AuthScreenState extends State<AuthScreen> {
                             TextFormField(
                               decoration: const InputDecoration(
                                 labelText: 'Mot de passe',
+                                labelStyle: TextStyle(
+                                  color: AppColors.secondary,
+                                  fontFamily: "Questrial",
+                                ),
                                 prefixIcon: Icon(Icons.lock),
                               ),
                               obscureText: true,
@@ -210,6 +244,10 @@ class AuthScreenState extends State<AuthScreen> {
                               TextFormField(
                                 decoration: const InputDecoration(
                                   labelText: 'Confirmer le mot de passe',
+                                  labelStyle: TextStyle(
+                                    color: AppColors.secondary,
+                                    fontFamily: "Questrial",
+                                  ),
                                   prefixIcon: Icon(Icons.lock),
                                 ),
                                 obscureText: true,
@@ -224,19 +262,28 @@ class AuthScreenState extends State<AuthScreen> {
                             ],
                             const SizedBox(height: 30),
                             ElevatedButton(
-                              onPressed: submit,
+                              onPressed: isLoading
+                                  ? null
+                                  : submit, // Désactive le bouton pendant le chargement
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: AppColors.primary,
                                 minimumSize: const Size(double.infinity, 50),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: Text(
-                                isLogin ? 'Se connecter' : 'S\'inscrire',
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.grey.shade100),
-                              ),
+                              child: isLoading
+                                  ? LoadingAnimationWidget.staggeredDotsWave(
+                                      color: Colors.white,
+                                      size: 30,
+                                    ) // Afficher l'indicateur de chargement
+                                  : Text(
+                                      isLogin ? 'Se connecter' : 'S\'inscrire',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                             const SizedBox(height: 10),
                             TextButton(
@@ -246,7 +293,7 @@ class AuthScreenState extends State<AuthScreen> {
                                     ? 'Pas de compte ? S\'inscrire'
                                     : 'Déjà inscrit ? Se connecter',
                                 style:
-                                    const TextStyle(color: Colors.blueAccent),
+                                    const TextStyle(color: AppColors.secondary),
                               ),
                             ),
                           ],
