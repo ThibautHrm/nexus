@@ -130,7 +130,13 @@ class HomeScreenState extends State<HomeScreen> {
 
   Widget _buildUserInfo() {
     if (_currentUser == null) {
-      return const CircularProgressIndicator();
+      // Utilise staggeredDotsWave animation pendant le chargement
+      return Center(
+        child: LoadingAnimationWidget.staggeredDotsWave(
+          color: AppColors.primary,
+          size: 30,
+        ),
+      );
     }
 
     return Row(

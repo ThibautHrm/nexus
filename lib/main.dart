@@ -10,9 +10,14 @@ import 'package:nexus/screens/profil_screen.dart';
 import 'package:nexus/screens/settings_screen.dart';
 import 'package:nexus/screens/signalement_screen.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import pour Flutter Native Splash
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Splash screen reste visible jusqu'à ce que Firebase soit initialisé
+  FlutterNativeSplash.preserve(
+      widgetsBinding: WidgetsFlutterBinding.ensureInitialized());
 
   // Initialiser Firebase et Intl
   await Firebase.initializeApp();
@@ -23,6 +28,8 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]).then((_) {
+    FlutterNativeSplash
+        .remove(); // Retirer le splash screen une fois que tout est prêt
     runApp(const NexusApp());
   });
 }

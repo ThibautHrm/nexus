@@ -6,6 +6,7 @@ import 'package:nexus/screens/add_post_screen.dart';
 import 'package:nexus/screens/post_detail_screen.dart';
 import 'package:nexus/services/firebase_service.dart';
 import 'package:nexus/themes/app_colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final GroupModel group;
@@ -163,17 +164,28 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
             children: [
               // Image à gauche, taille fixe et ajustée avec BoxFit.cover
               if (post.imageUrl.isNotEmpty)
-                Container(
+                SizedBox(
                   height: 150,
                   width: 150,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
+                  child: CachedNetworkImage(
+                    imageUrl: post.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(),
                     ),
-                    image: DecorationImage(
-                      image: NetworkImage(post.imageUrl),
-                      fit: BoxFit.cover, // Image ajustée sans overflow
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                    imageBuilder: (context, imageProvider) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          bottomLeft: Radius.circular(12),
+                        ),
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                 ),

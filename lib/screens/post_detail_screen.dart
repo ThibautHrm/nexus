@@ -6,6 +6,7 @@ import 'package:nexus/models/user_model.dart';
 import 'package:nexus/services/firebase_service.dart';
 import 'package:nexus/themes/app_colors.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final PostModel post;
@@ -178,14 +179,18 @@ class PostDetailScreenState extends State<PostDetailScreen> {
               // Header: User information and date
               Row(
                 children: [
-                  CircleAvatar(
-                    backgroundImage: user.photoProfil != null
-                        ? NetworkImage(user.photoProfil!)
-                        : null,
-                    radius: 20,
-                    child: user.photoProfil == null
-                        ? const Icon(Icons.person, color: Colors.grey)
-                        : null,
+                  CachedNetworkImage(
+                    imageUrl: user.photoProfil ?? '',
+                    imageBuilder: (context, imageProvider) => CircleAvatar(
+                      backgroundImage: imageProvider,
+                      radius: 20,
+                    ),
+                    placeholder: (context, url) => const CircleAvatar(
+                      radius: 20,
+                      child: CircularProgressIndicator(),
+                    ),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.person, color: Colors.grey),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -342,7 +347,13 @@ class PostDetailScreenState extends State<PostDetailScreen> {
                         if (widget.post.imageUrl.isNotEmpty)
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(widget.post.imageUrl),
+                            child: CachedNetworkImage(
+                              imageUrl: widget.post.imageUrl,
+                              placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator()),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.broken_image, size: 100),
+                            ),
                           ),
                         const SizedBox(height: 12),
                         Text(
