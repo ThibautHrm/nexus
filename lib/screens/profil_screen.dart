@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:intl/intl.dart';
 import 'package:nexus/themes/app_colors.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -15,6 +18,8 @@ class ProfilScreen extends StatefulWidget {
 class ProfilScreenState extends State<ProfilScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
   late Future<UserModel?> _userFuture;
+  File? _imageFile;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -32,6 +37,65 @@ class ProfilScreenState extends State<ProfilScreen> {
       return UserModel.fromDocument(doc);
     }
     return null;
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+      await _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_imageFile == null || user == null) return;
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('user_images')
+          .child('${user!.uid}.jpg');
+
+      // Delete old image if exists
+      UserModel? userData = await _fetchUserData();
+      if (userData?.photoProfil != null) {
+        try {
+          final oldRef =
+              FirebaseStorage.instance.refFromURL(userData!.photoProfil!);
+          await oldRef.delete();
+        } catch (e) {
+          throw ();
+        }
+      }
+
+      await ref.putFile(_imageFile!);
+      final url = await ref.getDownloadURL();
+
+      // Update Firestore with new image URL
+      await FirebaseFirestore.instance
+          .collection('utilisateurs')
+          .doc(user!.uid)
+          .update({
+        'photoProfil': url,
+      });
+
+      setState(() {
+        _userFuture = _fetchUserData(); // Refresh user data
+      });
+    } catch (e) {
+      throw ();
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
   }
 
   void _editProfile(UserModel userData) async {
@@ -135,9 +199,7 @@ class ProfilScreenState extends State<ProfilScreen> {
                       bottom: 0,
                       right: 4,
                       child: GestureDetector(
-                        onTap: () {
-                          //TODO: Fonction pour changer la photo de profil
-                        },
+                        onTap: _pickImage,
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(
@@ -152,6 +214,12 @@ class ProfilScreenState extends State<ProfilScreen> {
                         ),
                       ),
                     ),
+                    if (_isUploading)
+                      const Positioned(
+                        bottom: 10,
+                        right: 10,
+                        child: CircularProgressIndicator(),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 16.0),
