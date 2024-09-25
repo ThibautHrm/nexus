@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:nexus/models/news_model.dart';
+import 'package:nexus/models/user_model.dart';
 import 'package:nexus/screens/news_details_screen.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,10 +18,11 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-
   List<NewsModel> _newsList = [];
   bool _isLoading = true;
   String _selectedEmplacement = 'Tous';
+  UserModel? _currentUser;
+
   final List<String> _emplacements = [
     'Tous',
     'Angers',
@@ -42,9 +46,9 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadSelectedEmplacement();
+    _loadCurrentUser();
   }
 
-  // Chargement de l'emplacement sélectionné
   Future<void> _loadSelectedEmplacement() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? emplacement = prefs.getString('selectedEmplacement');
@@ -60,13 +64,11 @@ class HomeScreenState extends State<HomeScreen> {
     await _loadNews(emplacement: emplacementQuery);
   }
 
-  // Sauvegarde de l'emplacement sélectionné
   Future<void> _saveSelectedEmplacement(String emplacement) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('selectedEmplacement', emplacement);
   }
 
-  // Chargement des news en fonction de l'emplacement
   Future<void> _loadNews({String? emplacement}) async {
     setState(() {
       _isLoading = true;
@@ -85,19 +87,122 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Widget pour afficher une news individuelle
+  Future<void> _loadCurrentUser() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('utilisateurs')
+          .doc(user.uid)
+          .get();
+
+      if (mounted) {
+        // Vérification si le widget est toujours monté avant d'appeler setState
+        setState(() {
+          _currentUser = UserModel.fromDocument(userDoc);
+        });
+      }
+    }
+  }
+
+  AppBar _buildCustomAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.backgroundLight,
+      elevation: 0,
+      toolbarHeight: 70,
+      leadingWidth: 300,
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+        child: _buildUserInfo(),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: IconButton(
+            icon: const Icon(
+              Icons.circle_notifications,
+              color: AppColors.primary,
+              size: 38,
+            ),
+            onPressed: () {
+              // Action de notification
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUserInfo() {
+    if (_currentUser == null) {
+      return const CircularProgressIndicator();
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () {
+            // Navigue vers la page de profil
+            Navigator.pushNamed(context, '/profile');
+          },
+          child: CircleAvatar(
+            radius: 24,
+            backgroundImage: _currentUser?.photoProfil != null
+                ? NetworkImage(_currentUser!.photoProfil!)
+                : null,
+            backgroundColor: _currentUser?.photoProfil == null
+                ? AppColors.primary
+                : null, // Pas d'image si null
+            child: _currentUser?.photoProfil == null
+                ? const Icon(Icons.person, size: 24, color: Colors.white)
+                : null,
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Utilisation de Flexible pour éviter l'overflow du texte
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _currentUser?.nom ?? '',
+                style: const TextStyle(
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontFamily: "Questrial",
+                ),
+              ),
+              Text(
+                _currentUser?.role ?? 'Étudiant',
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 14,
+                  fontFamily: "Questrial",
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildNewsItem(NewsModel news) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => NewsDetailScreen(news: news)),
+          MaterialPageRoute(
+            builder: (context) => NewsDetailScreen(news: news),
+          ),
         );
       },
       child: Card(
+        color: Colors.grey.shade100,
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -106,7 +211,7 @@ class HomeScreenState extends State<HomeScreen> {
               tag: 'newsImage_${news.id}',
               child: ClipRRect(
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
+                    const BorderRadius.vertical(top: Radius.circular(8)),
                 child: news.imageUrl.isNotEmpty
                     ? Image.network(
                         news.imageUrl,
@@ -116,7 +221,7 @@ class HomeScreenState extends State<HomeScreen> {
                           if (progress == null) return child;
                           return Container(
                             height: 180,
-                            color: Colors.grey[300],
+                            color: Colors.grey.shade100,
                             child: const Center(
                                 child: CircularProgressIndicator()),
                           );
@@ -144,6 +249,7 @@ class HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(
                   fontSize: 20.0,
                   fontWeight: FontWeight.bold,
+                  fontFamily: "Questrial",
                 ),
               ),
             ),
@@ -154,6 +260,9 @@ class HomeScreenState extends State<HomeScreen> {
                 news.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: "Questrial",
+                ),
               ),
             ),
             Padding(
@@ -165,15 +274,21 @@ class HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 4.0),
                   Text(
                     news.emplacement,
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: const TextStyle(
+                      color: AppColors.textDark,
+                      fontFamily: "Questrial",
+                    ),
                   ),
                   const Spacer(),
-                  Icon(Icons.calendar_today,
-                      size: 16.0, color: Colors.grey[600]),
+                  const Icon(Icons.calendar_today,
+                      size: 16.0, color: AppColors.textDark),
                   const SizedBox(width: 4.0),
                   Text(
                     DateFormat.yMMMd('fr_FR').format(news.dateCreation),
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: const TextStyle(
+                      color: AppColors.textDark,
+                      fontFamily: "Questrial",
+                    ),
                   ),
                 ],
               ),
@@ -185,7 +300,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget pour le filtre par emplacement
   Widget _buildEmplacementFilter() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -208,10 +322,10 @@ class HomeScreenState extends State<HomeScreen> {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 4.0),
               padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.blue : Colors.grey[300],
-                borderRadius: BorderRadius.circular(20.0),
+                color: isSelected ? AppColors.secondary : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(30.0),
               ),
               child: Center(
                 child: Text(
@@ -219,6 +333,7 @@ class HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.black87,
                     fontWeight: FontWeight.bold,
+                    fontFamily: "Questrial",
                   ),
                 ),
               ),
@@ -229,255 +344,50 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget pour afficher un message lorsqu'il n'y a pas de news
   Widget _buildNoNewsMessage() {
-    return Center(
-      child: Text(
-        'Aucune news disponible pour cet emplacement.',
-        style: TextStyle(fontSize: 16.0, color: Colors.grey[600]),
-      ),
-    );
-  }
-
-  // Widget pour la grille en haut
-  Widget _buildTopGrid() {
-    return SizedBox(
-      height: 300,
-      child: GridView.builder(
-        scrollDirection: Axis.horizontal,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1,
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          'Aucune news disponible pour cet emplacement.',
+          style: TextStyle(
+            fontSize: 16.0,
+            color: AppColors.textDark,
+            fontFamily: "Questrial",
+          ),
         ),
-        itemCount: 6, // Nombre d'éléments dans la grille
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/signal');
-              },
-              child: Container(
-                margin: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const LinearGradient(
-                    colors: [Colors.red, Colors.redAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(2, 4),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_rounded,
-                        color: Colors.white,
-                        size: 40.0,
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        "Signaler",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }
-          if (index == 1) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/createNews');
-              },
-              child: Container(
-                margin: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const LinearGradient(
-                    colors: [Colors.green, Colors.greenAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(2, 4),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.newspaper_rounded,
-                        color: Colors.white,
-                        size: 40.0,
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        "Ajouter News",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }
-          if (index == 2) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/group');
-              },
-              child: Container(
-                margin: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const LinearGradient(
-                    colors: [Colors.blue, Colors.blueAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(2, 4),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.newspaper_rounded,
-                        color: Colors.white,
-                        size: 40.0,
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        "Forum",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          } else {
-            return Container(
-              margin: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  colors: _getGradientColorsForIndex(index),
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(2, 4),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.widgets,
-                      color: Colors.white,
-                      size: 40.0,
-                    ),
-                    const SizedBox(height: 8.0),
-                    Text(
-                      "Item $index",
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-        },
       ),
     );
   }
 
-  // Gestion des dégradés
-  List<Color> _getGradientColorsForIndex(int index) {
-    switch (index) {
-      case 2:
-        return [Colors.purple, Colors.pink];
-      case 3:
-        return [Colors.orange, Colors.deepOrange];
-      case 4:
-        return [Colors.amber, Colors.amberAccent];
-      case 5:
-        return [Colors.teal, Colors.cyan];
-      default:
-        return [Colors.grey, Colors.blueGrey];
-    }
-  }
-
-  // Widget pour le Drawer
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: Colors.grey[100],
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: SvgPicture.asset(
-                  'assets/images/epsilogo.svg',
+  Widget _buildActionButton(
+      String label, IconData icon, Color color, VoidCallback onTap) {
+    return FittedBox(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 40),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: "Questrial",
                 ),
               ),
-            ),
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.account_circle),
-            title: const Text('Profil'),
-            onTap: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Paramètres'),
-            onTap: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Déconnexion'),
-            onTap: () {
-              FirebaseService().logout();
-              Navigator.pushReplacementNamed(context, '/auth');
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -485,52 +395,106 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[100],
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.more_horiz),
-          ),
-        ],
-        title: const Text(
-          "Nexus",
-          style: TextStyle(fontFamily: "Questrial"),
-        ),
-        centerTitle: true,
-      ),
-      drawer: _buildDrawer(),
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
-          _buildTopGrid(),
-          const SizedBox(height: 20),
-          _buildEmplacementFilter(),
-          const SizedBox(height: 20),
-          Expanded(
-            child: _isLoading
+      backgroundColor: AppColors.backgroundLight,
+      appBar: _buildCustomAppBar(),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section grand rectangle avec "Forum"
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/group');
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Forum',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade100,
+                                  fontFamily: "Questrial",
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Discussions ouvertes',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.backgroundLight,
+                                  fontFamily: "Questrial",
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(right: 20),
+                            child: Icon(
+                              Icons.groups,
+                              color: Colors.white,
+                              size: 48,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Section des 3 boutons carrés
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildActionButton("Signaler",
+                          Icons.assistant_photo_rounded, AppColors.primary, () {
+                        Navigator.pushNamed(context, '/signal');
+                      }),
+                      _buildActionButton("Nouvelles", Icons.newspaper_rounded,
+                          AppColors.primary, () {
+                        Navigator.pushNamed(context, '/createNews');
+                      }),
+                      _buildActionButton("Planning",
+                          Icons.calendar_month_rounded, AppColors.primary, () {
+                        // Action pour le placeholder
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildEmplacementFilter(),
+            const SizedBox(height: 20),
+            _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _newsList.isEmpty
                     ? _buildNoNewsMessage()
                     : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: _newsList.length,
                         itemBuilder: (context, index) {
                           return _buildNewsItem(_newsList[index]);
                         },
                       ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

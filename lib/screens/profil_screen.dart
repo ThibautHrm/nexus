@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:intl/intl.dart';
+import 'package:nexus/themes/app_colors.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -58,15 +59,20 @@ class ProfilScreenState extends State<ProfilScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Mon Profil'),
+        title: const Text(
+          'Mon Profil',
+          style: TextStyle(
+            fontFamily: "Questrial",
+          ),
+        ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          color: Colors.black87,
+          color: AppColors.textDark,
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -81,7 +87,12 @@ class ProfilScreenState extends State<ProfilScreen> {
 
           if (snapshot.hasError || snapshot.data == null) {
             return const Center(
-              child: Text('Erreur lors de la récupération des données'),
+              child: Text(
+                'Erreur lors de la récupération des données',
+                style: TextStyle(
+                  fontFamily: "Questrial",
+                ),
+              ),
             );
           }
 
@@ -102,15 +113,15 @@ class ProfilScreenState extends State<ProfilScreen> {
                   children: [
                     CircleAvatar(
                       radius: 60.0,
-                      backgroundColor: Colors.grey[200],
+                      backgroundColor: AppColors.primary,
                       backgroundImage: userData.photoProfil != null
                           ? NetworkImage(userData.photoProfil!)
                           : null,
                       child: userData.photoProfil == null
-                          ? Icon(
+                          ? const Icon(
                               Icons.person,
                               size: 60.0,
-                              color: Colors.grey[400],
+                              color: Colors.white,
                             )
                           : null,
                     ),
@@ -125,7 +136,7 @@ class ProfilScreenState extends State<ProfilScreen> {
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.blueAccent,
+                            color: AppColors.secondary,
                           ),
                           child: const Icon(
                             Icons.camera_alt,
@@ -145,6 +156,7 @@ class ProfilScreenState extends State<ProfilScreen> {
                     fontSize: 24.0,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
+                    fontFamily: "Questrial",
                   ),
                 ),
                 const SizedBox(height: 4.0),
@@ -154,6 +166,7 @@ class ProfilScreenState extends State<ProfilScreen> {
                   style: TextStyle(
                     fontSize: 16.0,
                     color: Colors.grey[600],
+                    fontFamily: "Questrial",
                   ),
                 ),
                 const SizedBox(height: 16.0),
@@ -161,13 +174,18 @@ class ProfilScreenState extends State<ProfilScreen> {
                 ElevatedButton(
                   onPressed: () => _editProfile(userData),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.grey.shade100,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('Modifier le profil'),
+                  child: const Text(
+                    'Modifier le profil',
+                    style: TextStyle(
+                      fontFamily: "Questrial",
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24.0),
                 // Informations supplémentaires
@@ -187,9 +205,12 @@ class ProfilScreenState extends State<ProfilScreen> {
                 const SizedBox(height: 24.0),
                 // Statistiques ou autres fonctionnalités
                 _buildInfoSection('Statistiques', [
-                  _buildStatRow('Articles publiés', '12'),
-                  _buildStatRow('Nombre de upvotes', '34'),
-                  _buildStatRow('Commentaires', '56'),
+                  _buildStatRow(
+                      'Articles publiés', userData.nombreDePosts.toString()),
+                  _buildStatRow('Nombre de upvotes',
+                      userData.nombreDeUpvotesRecus.toString()),
+                  _buildStatRow(
+                      'Commentaires', userData.nombreDeCommentaires.toString()),
                 ]),
               ],
             ),
@@ -208,16 +229,19 @@ class ProfilScreenState extends State<ProfilScreen> {
           title,
           style: const TextStyle(
             fontSize: 18.0,
-            color: Colors.black87,
+            color: AppColors.textDark,
             fontWeight: FontWeight.bold,
+            fontFamily: "Questrial",
           ),
         ),
         const SizedBox(height: 8.0),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[50],
+            color: Colors.grey[100],
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(
+              color: AppColors.backgroundLight,
+            ),
           ),
           child: Column(
             children: children,
@@ -230,18 +254,23 @@ class ProfilScreenState extends State<ProfilScreen> {
   // Widget pour une ligne d'information
   Widget _buildInfoRow(IconData icon, String title, String content) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blueAccent),
+      leading: Icon(
+        icon,
+        color: AppColors.secondary,
+      ),
       title: Text(
         title,
         style: const TextStyle(
-          color: Colors.black87,
+          color: AppColors.textDark,
           fontWeight: FontWeight.w500,
+          fontFamily: "Questrial",
         ),
       ),
       subtitle: Text(
         content,
         style: TextStyle(
           color: Colors.grey[600],
+          fontFamily: "Questrial",
         ),
       ),
     );
@@ -263,7 +292,7 @@ class ProfilScreenState extends State<ProfilScreen> {
           Text(
             value,
             style: const TextStyle(
-              color: Colors.blueAccent,
+              color: AppColors.secondary,
               fontWeight: FontWeight.bold,
             ),
           ),
