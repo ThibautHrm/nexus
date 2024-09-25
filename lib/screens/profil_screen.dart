@@ -7,6 +7,7 @@ import 'package:nexus/themes/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -185,7 +186,7 @@ class ProfilScreenState extends State<ProfilScreen> {
                       radius: 60.0,
                       backgroundColor: AppColors.primary,
                       backgroundImage: userData.photoProfil != null
-                          ? NetworkImage(userData.photoProfil!)
+                          ? CachedNetworkImageProvider(userData.photoProfil!)
                           : null,
                       child: userData.photoProfil == null
                           ? const Icon(

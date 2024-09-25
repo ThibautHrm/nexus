@@ -8,6 +8,8 @@ import 'package:nexus/themes/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -64,11 +66,6 @@ class HomeScreenState extends State<HomeScreen> {
     await _loadNews(emplacement: emplacementQuery);
   }
 
-  Future<void> _saveSelectedEmplacement(String emplacement) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedEmplacement', emplacement);
-  }
-
   Future<void> _loadNews({String? emplacement}) async {
     setState(() {
       _isLoading = true;
@@ -96,7 +93,6 @@ class HomeScreenState extends State<HomeScreen> {
           .get();
 
       if (mounted) {
-        // Vérification si le widget est toujours monté avant d'appeler setState
         setState(() {
           _currentUser = UserModel.fromDocument(userDoc);
         });
@@ -142,24 +138,21 @@ class HomeScreenState extends State<HomeScreen> {
       children: [
         GestureDetector(
           onTap: () {
-            // Navigue vers la page de profil
             Navigator.pushNamed(context, '/profile');
           },
           child: CircleAvatar(
             radius: 24,
             backgroundImage: _currentUser?.photoProfil != null
-                ? NetworkImage(_currentUser!.photoProfil!)
+                ? CachedNetworkImageProvider(_currentUser!.photoProfil!)
                 : null,
-            backgroundColor: _currentUser?.photoProfil == null
-                ? AppColors.primary
-                : null, // Pas d'image si null
+            backgroundColor:
+                _currentUser?.photoProfil == null ? AppColors.primary : null,
             child: _currentUser?.photoProfil == null
                 ? const Icon(Icons.person, size: 24, color: Colors.white)
                 : null,
           ),
         ),
         const SizedBox(width: 10),
-        // Utilisation de Flexible pour éviter l'overflow du texte
         Flexible(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,13 +181,123 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildActionButton(
+      String label, IconData icon, Color color, VoidCallback onTap) {
+    return FittedBox(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: "Questrial",
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmplacementFilter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      height: 50,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: _emplacements.map((String emplacement) {
+          bool isSelected = _selectedEmplacement == emplacement;
+          return GestureDetector(
+            onTap: () async {
+              setState(() {
+                _selectedEmplacement = emplacement;
+                _isLoading = true;
+              });
+              String? emplacementQuery =
+                  _selectedEmplacement == 'Tous' ? null : _selectedEmplacement;
+              await _loadNews(emplacement: emplacementQuery);
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.secondary : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(30.0),
+              ),
+              child: Center(
+                child: Text(
+                  emplacement,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Questrial",
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildNoNewsMessage() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          'Aucune news disponible pour cet emplacement.',
+          style: TextStyle(
+            fontSize: 16.0,
+            color: AppColors.textDark,
+            fontFamily: "Questrial",
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildNewsItem(NewsModel news) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => NewsDetailScreen(news: news),
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                NewsDetailScreen(news: news),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.ease;
+
+              var tween =
+                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+              var offsetAnimation = animation.drive(tween);
+
+              return SlideTransition(
+                position: offsetAnimation,
+                child: child,
+              );
+            },
           ),
         );
       },
@@ -206,33 +309,24 @@ class HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image avec Hero Animation
             Hero(
               tag: 'newsImage_${news.id}',
               child: ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(8)),
                 child: news.imageUrl.isNotEmpty
-                    ? Image.network(
-                        news.imageUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: news.imageUrl,
                         height: 180,
                         fit: BoxFit.cover,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            height: 180,
-                            color: Colors.grey.shade100,
-                            child: const Center(
-                                child: CircularProgressIndicator()),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 180,
-                            color: Colors.grey,
-                            child: const Icon(Icons.broken_image, size: 100),
-                          );
-                        },
+                        placeholder: (context, url) => Center(
+                          child: LoadingAnimationWidget.staggeredDotsWave(
+                            color: AppColors.primary,
+                            size: 50,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.broken_image, size: 100),
                       )
                     : Container(
                         height: 180,
@@ -300,101 +394,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildEmplacementFilter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      height: 50,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: _emplacements.map((String emplacement) {
-          bool isSelected = _selectedEmplacement == emplacement;
-          return GestureDetector(
-            onTap: () async {
-              setState(() {
-                _selectedEmplacement = emplacement;
-                _isLoading = true;
-              });
-              await _saveSelectedEmplacement(_selectedEmplacement);
-              String? emplacementQuery =
-                  _selectedEmplacement == 'Tous' ? null : _selectedEmplacement;
-              await _loadNews(emplacement: emplacementQuery);
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4.0),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.secondary : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              child: Center(
-                child: Text(
-                  emplacement,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: "Questrial",
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildNoNewsMessage() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text(
-          'Aucune news disponible pour cet emplacement.',
-          style: TextStyle(
-            fontSize: 16.0,
-            color: AppColors.textDark,
-            fontFamily: "Questrial",
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-      String label, IconData icon, Color color, VoidCallback onTap) {
-    return FittedBox(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 40),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontFamily: "Questrial",
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -409,7 +408,6 @@ class HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Section grand rectangle avec "Forum"
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, '/group');
@@ -460,7 +458,6 @@ class HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Section des 3 boutons carrés
                   FittedBox(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -508,7 +505,12 @@ class HomeScreenState extends State<HomeScreen> {
             _buildEmplacementFilter(),
             const SizedBox(height: 20),
             _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(
+                    child: LoadingAnimationWidget.staggeredDotsWave(
+                      color: AppColors.primary,
+                      size: 50,
+                    ),
+                  )
                 : _newsList.isEmpty
                     ? _buildNoNewsMessage()
                     : ListView.builder(
