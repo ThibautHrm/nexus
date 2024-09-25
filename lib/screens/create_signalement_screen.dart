@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/models/signalement_model.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart';
 
 class CreateSignalementScreen extends StatefulWidget {
   const CreateSignalementScreen({super.key});
@@ -72,24 +73,137 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
     }
   }
 
+  Widget _buildSimpleTextField(String labelText, IconData icon,
+      {int maxLines = 1,
+      required Function(String) onSaved,
+      String? Function(String?)? validator}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 4,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: TextFormField(
+          maxLines: maxLines,
+          style: const TextStyle(
+            fontFamily: 'Questrial',
+            color: AppColors.textDark,
+          ),
+          decoration: InputDecoration(
+            labelText: labelText,
+            labelStyle: const TextStyle(
+              fontFamily: 'Questrial',
+              fontSize: 16,
+              color: AppColors.textDark,
+            ),
+            filled: true,
+            fillColor: Colors.grey[200],
+            prefixIcon: Icon(icon, color: AppColors.secondary),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          onSaved: (value) => onSaved(value!),
+          validator: validator,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String labelText, IconData icon, List<String> items,
+      {required String? value,
+      required Function(String?) onChanged,
+      String? Function(String?)? validator}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 4,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[200],
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            labelText: labelText,
+            labelStyle: const TextStyle(
+              fontFamily: 'Questrial',
+              color: AppColors.textDark,
+              fontSize: 16,
+            ),
+            prefixIcon: Icon(icon, color: AppColors.secondary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          value: value,
+          items: items
+              .map((item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(
+                      item,
+                      style: const TextStyle(
+                        fontFamily: 'Questrial',
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+          validator: validator,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Créer un signalement'),
+        title: const Text(
+          'Créer un signalement',
+          style: TextStyle(
+            fontFamily: 'Questrial',
+            color: AppColors.textDark,
+          ),
+        ),
+        backgroundColor: AppColors.backgroundLight,
+        centerTitle: true,
+        elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Titre',
-                  prefixIcon: Icon(Icons.title),
-                ),
-                onSaved: (value) => titre = value!.trim(),
+              _buildSimpleTextField(
+                'Titre',
+                Icons.title,
+                onSaved: (value) => titre = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez entrer un titre.';
@@ -97,14 +211,11 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  prefixIcon: Icon(Icons.description),
-                ),
+              _buildSimpleTextField(
+                'Description',
+                Icons.description,
                 maxLines: 5,
-                onSaved: (value) => description = value!.trim(),
+                onSaved: (value) => description = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez entrer une description.';
@@ -112,24 +223,12 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              // Dropdown pour la catégorie
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Catégorie',
-                  prefixIcon: Icon(Icons.category),
-                ),
-                items: _categories
-                    .map((cat) => DropdownMenuItem(
-                          value: cat,
-                          child: Text(cat),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    categorie = value;
-                  });
-                },
+              _buildDropdown(
+                'Catégorie',
+                Icons.category,
+                _categories,
+                value: categorie,
+                onChanged: (value) => setState(() => categorie = value),
                 validator: (value) {
                   if (value == null) {
                     return 'Veuillez sélectionner une catégorie.';
@@ -137,24 +236,12 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              // Dropdown pour l'emplacement (campus)
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Emplacement',
-                  prefixIcon: Icon(Icons.pin_drop_sharp),
-                ),
-                items: _campus
-                    .map((campus) => DropdownMenuItem(
-                          value: campus,
-                          child: Text(campus),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    emplacement = value;
-                  });
-                },
+              _buildDropdown(
+                'Emplacement',
+                Icons.pin_drop,
+                _campus,
+                value: emplacement,
+                onChanged: (value) => setState(() => emplacement = value),
                 validator: (value) {
                   if (value == null) {
                     return 'Veuillez sélectionner un emplacement.';
@@ -163,12 +250,22 @@ class CreateSignalementScreenState extends State<CreateSignalementScreen> {
                 },
               ),
               const SizedBox(height: 32),
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: _submit,
-                icon: const Icon(Icons.send),
-                label: const Text('Soumettre'),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Soumettre',
+                  style: TextStyle(
+                    fontFamily: 'Questrial',
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],

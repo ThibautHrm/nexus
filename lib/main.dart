@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import pour gérer l'orientation
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:nexus/models/user_model.dart';
 import 'package:nexus/screens/auth_screen.dart';
 import 'package:nexus/screens/create_news_screen.dart';
+import 'package:nexus/screens/edit_profile_screen.dart';
 import 'package:nexus/screens/forum_group_screen.dart';
 import 'package:nexus/screens/home_screen.dart';
 import 'package:nexus/screens/profil_screen.dart';
@@ -55,6 +57,9 @@ class NexusApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/createNews': (context) => const AddNewsScreen(),
         '/group': (context) => const GroupScreen(),
+        '/editProfile': (context) => EditProfileScreen(
+              userData: ModalRoute.of(context)!.settings.arguments as UserModel,
+            ),
       },
     );
   }
