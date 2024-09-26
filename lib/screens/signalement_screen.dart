@@ -76,7 +76,7 @@ class SignalementScreenState extends State<SignalementScreen> {
                   child: ListView(
                     controller: controller,
                     children: [
-                      // Title Section (with icon and title)
+                      // Section titre et aussi l'icone
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -104,7 +104,7 @@ class SignalementScreenState extends State<SignalementScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Description Section
+                      // Description du signalement
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -122,7 +122,7 @@ class SignalementScreenState extends State<SignalementScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Date and Status Section
+                      // Date et statut
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -141,7 +141,7 @@ class SignalementScreenState extends State<SignalementScreen> {
                             ],
                           ),
 
-                          // Button to update status for staff
+                          // Mettre à jour le statut si on est staff
                           if (_currentUser?.role == 'staff') ...[
                             TextButton(
                               onPressed: () => _showStyledStatusDialog(
@@ -156,7 +156,7 @@ class SignalementScreenState extends State<SignalementScreen> {
                               ),
                             ),
                           ] else ...[
-                            // Badge de statut pour les non-staff users
+                            // Badge de statut pour les non-staff (étudiant)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -180,7 +180,7 @@ class SignalementScreenState extends State<SignalementScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Buttons for Edit and Delete
+                      // Modifier et supprimer
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
@@ -192,7 +192,9 @@ class SignalementScreenState extends State<SignalementScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 24),
+                                vertical: 12,
+                                horizontal: 24,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -215,7 +217,9 @@ class SignalementScreenState extends State<SignalementScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 24),
+                                vertical: 12,
+                                horizontal: 24,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -244,7 +248,7 @@ class SignalementScreenState extends State<SignalementScreen> {
     );
   }
 
-// Show a stylized dialog to select status
+// Afficher le dialog box pour les actions
   void _showStyledStatusDialog(BuildContext context,
       SignalementModel signalement, StateSetter setModalState) {
     showDialog(

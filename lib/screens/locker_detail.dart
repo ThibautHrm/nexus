@@ -37,7 +37,7 @@ class DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
     // Si l'extension est absente, par exemple si l'URL n'en contient pas, définir une extension par défaut
     if (fileExtension.isEmpty) {
-      fileExtension = '.pdf'; // Par défaut, PDF ou tout autre format attendu
+      fileExtension = '.pdf'; // Par défaut en PDF
     }
 
     // Retourner le nom de fichier nettoyé avec l'extension correcte
@@ -145,8 +145,8 @@ class DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     ),
                   )
                 : ElevatedButton.icon(
-                    onPressed: () =>
-                        _shareDocument(context), // Partage du document
+                    onPressed: () => _shareDocument(
+                        context), // Partage du document avec share
                     icon: const Icon(
                       Icons.share,
                       color: AppColors.backgroundLight,

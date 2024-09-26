@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nexus/models/post_model.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:nexus/services/firebase_service.dart';
-import 'package:nexus/themes/app_colors.dart'; // Pour les couleurs globales
+import 'package:nexus/themes/app_colors.dart';
 
 class AddPostScreen extends StatefulWidget {
   final String groupId;
@@ -205,7 +205,7 @@ class AddPostScreenState extends State<AddPostScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              // Image sélectionnée et possibilité de supprimer
+              // Image sélectionnée et possibilité de la supprimer
               _imageFile != null
                   ? Stack(
                       alignment: Alignment.topRight,
@@ -247,7 +247,7 @@ class AddPostScreenState extends State<AddPostScreen> {
                 onPressed: _pickImage,
               ),
               const SizedBox(height: 20),
-              // Bouton d'envoi de post
+              // Bouton d'envoi du post
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton.icon(

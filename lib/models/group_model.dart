@@ -6,7 +6,8 @@ class GroupModel {
   String description;
   String adminUid; // UID du créateur du groupe (staff)
   List<String> membres; // Liste des membres (UID des utilisateurs)
-  List<String> demandesEnAttente; // UID des utilisateurs qui ont demandé à rejoindre
+  List<String>
+      demandesEnAttente; // UID des utilisateurs qui ont demandé à rejoindre (future)
 
   GroupModel({
     required this.id,

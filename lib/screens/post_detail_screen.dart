@@ -120,19 +120,25 @@ class PostDetailScreenState extends State<PostDetailScreen> {
               child: const Text(
                 "Annuler",
                 style: TextStyle(
-                    fontFamily: 'Questrial', color: AppColors.secondary),
+                  fontFamily: 'Questrial',
+                  color: AppColors.secondary,
+                ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: () => Navigator.pop(context, true),
               child: const Text(
                 "Supprimer",
-                style: TextStyle(fontFamily: 'Questrial', color: Colors.white),
+                style: TextStyle(
+                  fontFamily: 'Questrial',
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
@@ -176,7 +182,7 @@ class PostDetailScreenState extends State<PostDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: User information and date
+              // Header avec les infos user et la date
               Row(
                 children: [
                   CachedNetworkImage(
@@ -234,7 +240,7 @@ class PostDetailScreenState extends State<PostDetailScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              // Likes and share
+              // Likes et partage
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

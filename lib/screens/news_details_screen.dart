@@ -12,7 +12,7 @@ class NewsDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Formater la date
+    // Formater la date pour la rendre plus belle et lisible
     final String formattedDate =
         DateFormat.yMMMMd('fr_FR').format(news.dateCreation);
 
@@ -36,7 +36,7 @@ class NewsDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image avec Hero Animation
+            // Image avec une animation pour l'affichage
             Hero(
               tag: 'newsImage_${news.id}',
               child: news.imageUrl.isNotEmpty

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart'; // Import du package
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:nexus/services/firebase_service.dart';
 import 'package:nexus/themes/app_colors.dart';
 
@@ -36,7 +36,7 @@ class AuthScreenState extends State<AuthScreen> {
     if (isValid != null && isValid) {
       _formKey.currentState?.save();
       setState(() {
-        isLoading = true; // Commencer le chargement
+        isLoading = true;
       });
 
       try {

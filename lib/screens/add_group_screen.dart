@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/models/group_model.dart';
 import 'package:nexus/models/user_model.dart';
 import 'package:nexus/services/firebase_service.dart';
-import 'package:nexus/themes/app_colors.dart'; // Assurez-vous d'utiliser le fichier de couleurs global
+import 'package:nexus/themes/app_colors.dart';
 
 class AddGroupScreen extends StatefulWidget {
   const AddGroupScreen({super.key});
@@ -68,7 +68,7 @@ class AddGroupScreenState extends State<AddGroupScreen> {
         centerTitle: true,
         backgroundColor: AppColors.backgroundLight,
         iconTheme: const IconThemeData(color: AppColors.textDark),
-        elevation: 0, // Supprime l'ombre sous l'appbar
+        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -117,7 +117,8 @@ class AddGroupScreenState extends State<AddGroupScreen> {
                     color: Colors.grey,
                   ),
                 ),
-                maxLines: 3, // Permettre plus de lignes pour la description
+                // Permettre plus de lignes pour la description
+                maxLines: 3,
                 onSaved: (value) {
                   _groupDescription = value!;
                 },

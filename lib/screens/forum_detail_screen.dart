@@ -162,7 +162,7 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
           height: 150,
           child: Row(
             children: [
-              // Image à gauche, taille fixe et ajustée avec BoxFit.cover
+              // Image à gauche, taille fixe et ajustement de l'image (en cover)
               if (post.imageUrl.isNotEmpty)
                 SizedBox(
                   height: 150,
@@ -245,7 +245,7 @@ class GroupDetailScreenState extends State<GroupDetailScreen> {
                           ),
                         ],
                       ),
-                      // Extrait de la description
+                      // Extrait de la description avec ellipsis (...)
                       Text(
                         _getShortDescription(post.description),
                         style: const TextStyle(

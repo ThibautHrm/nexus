@@ -120,7 +120,7 @@ class HomeScreenState extends State<HomeScreen> {
               size: 38,
             ),
             onPressed: () {
-              // Action de notification
+              // TODO: Action de notification dans le future
             },
           ),
         ),
@@ -380,8 +380,11 @@ class HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  const Icon(Icons.calendar_today,
-                      size: 16.0, color: AppColors.textDark),
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 16.0,
+                    color: AppColors.textDark,
+                  ),
                   const SizedBox(width: 4.0),
                   Text(
                     DateFormat.yMMMd('fr_FR').format(news.dateCreation),
@@ -400,6 +403,7 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Si on affiche news ou document
   Widget _buildStaffActionButton() {
     if (_currentUser?.role == 'staff') {
       return _buildActionButton(

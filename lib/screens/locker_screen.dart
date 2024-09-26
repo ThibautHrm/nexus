@@ -182,9 +182,10 @@ class LockerScreenState extends State<LockerScreen> {
               child: const Text(
                 'Annuler',
                 style: TextStyle(
-                    fontFamily: 'Questrial',
-                    color: AppColors.secondary,
-                    fontWeight: FontWeight.bold),
+                  fontFamily: 'Questrial',
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             ElevatedButton(
@@ -194,7 +195,8 @@ class LockerScreenState extends State<LockerScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text(
                 'Confirmer',
@@ -236,7 +238,9 @@ class LockerScreenState extends State<LockerScreen> {
               child: const Text(
                 'Annuler',
                 style: TextStyle(
-                    fontFamily: 'Questrial', color: AppColors.secondary),
+                  fontFamily: 'Questrial',
+                  color: AppColors.secondary,
+                ),
               ),
             ),
             ElevatedButton(
@@ -244,7 +248,8 @@ class LockerScreenState extends State<LockerScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text(
                 'Supprimer',
@@ -325,7 +330,7 @@ class LockerScreenState extends State<LockerScreen> {
                       ),
                       child: Card(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12), // Taille augmentée
+                            horizontal: 16, vertical: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16)),
                         elevation: 6,

@@ -9,7 +9,7 @@ class PostModel {
   int upvotes;
   DateTime dateCreation;
   List<String> upvotedBy; // UID des utilisateurs qui ont voté
-  String tag; // Tag pour le post
+  String tag;
 
   PostModel({
     required this.id,
@@ -35,7 +35,7 @@ class PostModel {
       dateCreation: (data['dateCreation'] as Timestamp).toDate(),
       upvotes: data['upvotes'] ?? 0,
       upvotedBy: List<String>.from(data['upvotedBy'] ?? []),
-      tag: data['tag'] ?? 'Autre', // Ajout du tag avec valeur par défaut
+      tag: data['tag'] ?? 'Autre', // tag avec valeur par défaut
     );
   }
 
@@ -49,7 +49,7 @@ class PostModel {
       'dateCreation': dateCreation,
       'upvotes': upvotes,
       'upvotedBy': upvotedBy,
-      'tag': tag, // Ajout du tag
+      'tag': tag,
     };
   }
 }

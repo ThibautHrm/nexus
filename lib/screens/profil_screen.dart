@@ -64,7 +64,7 @@ class ProfilScreenState extends State<ProfilScreen> {
           .child('user_images')
           .child('${user!.uid}.jpg');
 
-      // Supprime l'ancienne image si il y en a
+      // Supprime l'ancienne image si il y en a une
       UserModel? userData = await _fetchUserData();
       if (userData?.photoProfil != null) {
         try {
@@ -114,6 +114,87 @@ class ProfilScreenState extends State<ProfilScreen> {
     await FirebaseAuth.instance.signOut();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, '/auth');
+  }
+
+  // Widget pour la section d'informations
+  Widget _buildInfoSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18.0,
+            color: AppColors.textDark,
+            fontWeight: FontWeight.bold,
+            fontFamily: "Questrial",
+          ),
+        ),
+        const SizedBox(height: 8.0),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.backgroundLight,
+            ),
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Widget pour une ligne d'information
+  Widget _buildInfoRow(IconData icon, String title, String content) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: AppColors.secondary,
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: AppColors.textDark,
+          fontWeight: FontWeight.w500,
+          fontFamily: "Questrial",
+        ),
+      ),
+      subtitle: Text(
+        content,
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontFamily: "Questrial",
+        ),
+      ),
+    );
+  }
+
+  // Widget pour une ligne de statistique
+  Widget _buildStatRow(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.black87,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.secondary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -316,87 +397,6 @@ class ProfilScreenState extends State<ProfilScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  // Widget pour une section d'informations avec un titre
-  Widget _buildInfoSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18.0,
-            color: AppColors.textDark,
-            fontWeight: FontWeight.bold,
-            fontFamily: "Questrial",
-          ),
-        ),
-        const SizedBox(height: 8.0),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: AppColors.backgroundLight,
-            ),
-          ),
-          child: Column(
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Widget pour une ligne d'information
-  Widget _buildInfoRow(IconData icon, String title, String content) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: AppColors.secondary,
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: AppColors.textDark,
-          fontWeight: FontWeight.w500,
-          fontFamily: "Questrial",
-        ),
-      ),
-      subtitle: Text(
-        content,
-        style: TextStyle(
-          color: Colors.grey[600],
-          fontFamily: "Questrial",
-        ),
-      ),
-    );
-  }
-
-  // Widget pour une ligne de statistique
-  Widget _buildStatRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.black87,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.secondary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
       ),
     );
   }

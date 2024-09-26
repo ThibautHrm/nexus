@@ -52,7 +52,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
       try {
         final user = FirebaseAuth.instance.currentUser;
 
-        // Vérifier l'ancien mot de passe
+        //! Vérifier l'ancien mot de passe (à fix)
         if (_oldPassword != null && _oldPassword!.isNotEmpty) {
           final credential = EmailAuthProvider.credential(
               email: user!.email!, password: _oldPassword!);

@@ -10,10 +10,9 @@ import 'package:nexus/screens/forum_group_screen.dart';
 import 'package:nexus/screens/home_screen.dart';
 import 'package:nexus/screens/locker_screen.dart';
 import 'package:nexus/screens/profil_screen.dart';
-import 'package:nexus/screens/settings_screen.dart';
 import 'package:nexus/screens/signalement_screen.dart';
 import 'package:nexus/services/firebase_service.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import pour Flutter Native Splash
+import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import pour le splash screen natif
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +54,6 @@ class NexusApp extends StatelessWidget {
         '/auth': (context) => const AuthScreen(),
         '/signal': (context) => const SignalementScreen(),
         '/profile': (context) => const ProfilScreen(),
-        '/settings': (context) => const SettingsScreen(),
         '/createNews': (context) => const AddNewsScreen(),
         '/group': (context) => const GroupScreen(),
         '/locker': (context) => const LockerScreen(),
