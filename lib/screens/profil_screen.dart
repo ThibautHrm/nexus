@@ -64,7 +64,7 @@ class ProfilScreenState extends State<ProfilScreen> {
           .child('user_images')
           .child('${user!.uid}.jpg');
 
-      // Delete old image if exists
+      // Supprime l'ancienne image si il y en a
       UserModel? userData = await _fetchUserData();
       if (userData?.photoProfil != null) {
         try {
@@ -88,7 +88,7 @@ class ProfilScreenState extends State<ProfilScreen> {
       });
 
       setState(() {
-        _userFuture = _fetchUserData(); // Refresh user data
+        _userFuture = _fetchUserData(); // Refresh les données
       });
     } catch (e) {
       throw ();

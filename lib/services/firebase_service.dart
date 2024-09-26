@@ -30,7 +30,7 @@ class FirebaseService {
     return _auth.authStateChanges();
   }
 
-  // Gestion de l'authentification
+  // Création de l'authentification
   Future<User?> signUp(String email, String password, String nom) async {
     try {
       UserCredential userCredential = await _auth
@@ -160,7 +160,7 @@ class FirebaseService {
     }
   }
 
-  // Gestion des signalements (SignalementModel)
+  // Création des signalements
   Future<void> addSignalement(SignalementModel signalement) async {
     DocumentReference docRef = _firestore.collection('signalements').doc();
     signalement.id = docRef.id;
@@ -553,7 +553,7 @@ class FirebaseService {
   // Méthode pour ajouter un document
   Future<void> addDocument(DocumentModel document) async {
     DocumentReference docRef = _firestore.collection('documents').doc();
-    document.id = docRef.id; // Générer un ID unique pour le document
+    document.id = docRef.id;
     await docRef.set(document.toMap());
   }
 
