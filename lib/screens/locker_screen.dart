@@ -1,13 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart'; // Pour formater la date
 import 'package:nexus/models/document_model.dart';
 import 'package:nexus/screens/locker_detail.dart';
 import 'package:nexus/services/firebase_service.dart';
 import 'package:nexus/themes/app_colors.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Pour les images avec cache
+import 'package:logger/logger.dart'; // Logger pour déboguer
+import 'package:permission_handler/permission_handler.dart'; // Pour les permissions
+
+final logger = Logger();
 
 class LockerScreen extends StatefulWidget {
   const LockerScreen({super.key});
@@ -25,6 +29,16 @@ class LockerScreenState extends State<LockerScreen> {
   void initState() {
     super.initState();
     _loadDocuments();
+  }
+
+  Future<void> _checkPermissions() async {
+    if (await Permission.storage.isDenied) {
+      await Permission.storage.request();
+    }
+
+    if (await Permission.camera.isDenied) {
+      await Permission.camera.request();
+    }
   }
 
   Future<void> _loadDocuments() async {
@@ -55,6 +69,7 @@ class LockerScreenState extends State<LockerScreen> {
   }
 
   Future<void> _scanDocument() async {
+    await _checkPermissions();
     try {
       final scannedDocuments = await CunningDocumentScanner.getPictures();
       if (scannedDocuments != null && scannedDocuments.isNotEmpty) {
@@ -70,6 +85,7 @@ class LockerScreenState extends State<LockerScreen> {
   }
 
   Future<void> _pickDocument() async {
+    await _checkPermissions();
     FilePickerResult? result = await FilePicker.platform.pickFiles();
     if (result != null) {
       File selectedFile = File(result.files.single.path!);
@@ -83,6 +99,7 @@ class LockerScreenState extends State<LockerScreen> {
   }
 
   Future<void> _uploadDocument(File file) async {
+    await _checkPermissions();
     String documentName = await _showDocumentNameDialog();
     if (documentName.isNotEmpty) {
       setState(() {
@@ -92,20 +109,28 @@ class LockerScreenState extends State<LockerScreen> {
       try {
         final user = _firebaseService.getCurrentUser();
         if (user != null) {
+          logger.d("Début de l'upload du fichier...");
+          await Future.delayed(const Duration(seconds: 1));
           String fileUrl = await _firebaseService.uploadFile(file, user.uid);
 
-          DocumentModel document = DocumentModel(
-            id: '',
-            nom: documentName,
-            url: fileUrl,
-            ownerId: user.uid,
-            dateAjout: DateTime.now(),
-          );
+          if (fileUrl.isNotEmpty) {
+            DocumentModel document = DocumentModel(
+              id: '',
+              nom: documentName,
+              url: fileUrl,
+              ownerId: user.uid,
+              dateAjout: DateTime.now(),
+            );
 
-          await _firebaseService.addDocument(document);
-          _loadDocuments();
+            await _firebaseService.addDocument(document);
+            _loadDocuments();
+            logger.d("Fichier uploadé avec succès.");
+          } else {
+            throw Exception("L'URL du fichier est vide ou invalide.");
+          }
         }
       } catch (e) {
+        logger.e("Erreur lors de l'upload du document : $e");
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Erreur lors de l\'upload du document: $e'),
@@ -217,16 +242,13 @@ class LockerScreenState extends State<LockerScreen> {
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondary,
+                backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
               child: const Text(
                 'Supprimer',
-                style: TextStyle(
-                  fontFamily: 'Questrial',
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontFamily: 'Questrial', color: Colors.white),
               ),
             ),
           ],
@@ -239,39 +261,13 @@ class LockerScreenState extends State<LockerScreen> {
         await _firebaseService.deleteDocument(document.id, document.url);
         _loadDocuments();
       } catch (e) {
+        logger.e("Erreur lors de la suppression du document : $e");
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Erreur lors de la suppression du document: $e'),
         ));
       }
     }
-  }
-
-  void _navigateToDetail(DocumentModel document) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            DocumentDetailScreen(
-          documentUrl: document.url,
-          documentName: document.nom,
-        ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOut;
-
-          var tween =
-              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-          var offsetAnimation = animation.drive(tween);
-
-          return SlideTransition(
-            position: offsetAnimation,
-            child: child,
-          );
-        },
-      ),
-    );
   }
 
   @override
@@ -303,14 +299,36 @@ class LockerScreenState extends State<LockerScreen> {
                   itemCount: _documents.length,
                   itemBuilder: (context, index) {
                     final document = _documents[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      elevation: 6,
-                      child: InkWell(
-                        onTap: () => _navigateToDetail(document),
+                    return GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  DocumentDetailScreen(
+                            documentUrl: document.url,
+                            documentName: document.nom,
+                          ),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            const begin = Offset(1.0, 0.0);
+                            const end = Offset.zero;
+                            const curve = Curves.ease;
+                            var tween = Tween(begin: begin, end: end)
+                                .chain(CurveTween(curve: curve));
+                            return SlideTransition(
+                              position: animation.drive(tween),
+                              child: child,
+                            );
+                          },
+                        ),
+                      ),
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12), // Taille augmentée
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 6,
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: Row(
@@ -355,8 +373,8 @@ class LockerScreenState extends State<LockerScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: AppColors.secondary),
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () => _deleteDocument(document),
                               ),
                             ],

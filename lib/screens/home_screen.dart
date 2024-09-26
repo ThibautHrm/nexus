@@ -401,9 +401,9 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStaffActionButton() {
-    if (_currentUser?.role == 'Staff') {
+    if (_currentUser?.role == 'staff') {
       return _buildActionButton(
-          "Poster Nouvelles", Icons.newspaper_rounded, AppColors.primary, () {
+          "Nouvelles", Icons.newspaper_rounded, AppColors.primary, () {
         Navigator.pushNamed(context, '/createNews');
       });
     } else {
