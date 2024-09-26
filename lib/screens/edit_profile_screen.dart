@@ -34,11 +34,21 @@ class EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _updateProfile() async {
     if (_formKey.currentState!.validate()) {
+      // Sauvegarde les champs de texte
+      _formKey.currentState!.save();
+
+      // Validation des mots de passe
+      if (_newPassword != _confirmPassword) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Les nouveaux mots de passe ne correspondent pas.'),
+        ));
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
 
-      _formKey.currentState!.save();
       try {
         final user = FirebaseAuth.instance.currentUser;
 
@@ -54,10 +64,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
           await user!.verifyBeforeUpdateEmail(_email!);
         }
 
-        // Mettre à jour le mot de passe si un nouveau est fourni et validé
-        if (_newPassword != null &&
-            _newPassword!.isNotEmpty &&
-            _newPassword == _confirmPassword) {
+        // Mettre à jour le mot de passe si un nouveau est fourni
+        if (_newPassword != null && _newPassword!.isNotEmpty) {
           await user!.updatePassword(_newPassword!);
         }
 
@@ -69,6 +77,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
           'nom': _name,
           'email': _email,
         });
+
         if (!mounted) return;
         Navigator.pop(context, true);
       } catch (e) {
@@ -207,12 +216,6 @@ class EditProfileScreenState extends State<EditProfileScreen> {
                 (value) => _confirmPassword = value,
                 obscureText: _obscureConfirmPassword,
                 isPasswordField: true,
-                validator: (value) {
-                  if (value != _newPassword) {
-                    return 'Les mots de passe ne correspondent pas';
-                  }
-                  return null;
-                },
                 onToggleVisibility: () {
                   setState(() {
                     _obscureConfirmPassword = !_obscureConfirmPassword;

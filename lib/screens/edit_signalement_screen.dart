@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/models/signalement_model.dart';
 import 'package:nexus/services/firebase_service.dart';
+import 'package:nexus/themes/app_colors.dart';
 
 class EditSignalementScreen extends StatefulWidget {
   final SignalementModel signalement;
@@ -18,7 +19,6 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
   late String titre;
   late String description;
   String? categorie;
-  String? campus;
   String? emplacement;
 
   final List<String> _categories = [
@@ -55,12 +55,10 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
     categorie = widget.signalement.categorie;
     emplacement = widget.signalement.emplacement;
 
-    // Vérifie que la catégorie est dans la liste
     if (!_categories.contains(categorie)) {
       categorie = null;
     }
 
-    // Vérifie que l'emplacement est dans la liste
     if (!_campus.contains(emplacement)) {
       emplacement = null;
     }
@@ -81,25 +79,140 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
     }
   }
 
+  Widget _buildSimpleTextField(String labelText, IconData icon,
+      {int maxLines = 1,
+      required Function(String) onSaved,
+      String? initialValue,
+      String? Function(String?)? validator}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 4,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: TextFormField(
+          maxLines: maxLines,
+          initialValue: initialValue,
+          style: const TextStyle(
+            fontFamily: 'Questrial',
+            color: AppColors.textDark,
+          ),
+          decoration: InputDecoration(
+            labelText: labelText,
+            labelStyle: const TextStyle(
+              fontFamily: 'Questrial',
+              fontSize: 16,
+              color: AppColors.textDark,
+            ),
+            filled: true,
+            fillColor: Colors.grey[200],
+            prefixIcon: Icon(icon, color: AppColors.secondary),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          onSaved: (value) => onSaved(value!),
+          validator: validator,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String labelText, IconData icon, List<String> items,
+      {required String? value,
+      required Function(String?) onChanged,
+      String? Function(String?)? validator}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 4,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[200],
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            labelText: labelText,
+            labelStyle: const TextStyle(
+              fontFamily: 'Questrial',
+              color: AppColors.textDark,
+              fontSize: 16,
+            ),
+            prefixIcon: Icon(icon, color: AppColors.secondary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          value: value,
+          items: items
+              .map((item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(
+                      item,
+                      style: const TextStyle(
+                        fontFamily: 'Questrial',
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+          validator: validator,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Modifier le signalement'),
+        title: const Text(
+          'Modifier le signalement',
+          style: TextStyle(
+            fontFamily: 'Questrial',
+            color: AppColors.textDark,
+          ),
+        ),
+        backgroundColor: AppColors.backgroundLight,
+        centerTitle: true,
+        elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
+              _buildSimpleTextField(
+                'Titre',
+                Icons.title,
                 initialValue: titre,
-                decoration: const InputDecoration(
-                  labelText: 'Titre',
-                  prefixIcon: Icon(Icons.title),
-                ),
-                onSaved: (value) => titre = value!.trim(),
+                onSaved: (value) => titre = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez entrer un titre.';
@@ -107,15 +220,12 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: description,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  prefixIcon: Icon(Icons.description),
-                ),
+              _buildSimpleTextField(
+                'Description',
+                Icons.description,
                 maxLines: 5,
-                onSaved: (value) => description = value!.trim(),
+                initialValue: description,
+                onSaved: (value) => description = value,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez entrer une description.';
@@ -123,24 +233,12 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
+              _buildDropdown(
+                'Catégorie',
+                Icons.category,
+                _categories,
                 value: categorie,
-                decoration: const InputDecoration(
-                  labelText: 'Catégorie',
-                  prefixIcon: Icon(Icons.category),
-                ),
-                items: _categories
-                    .map((cat) => DropdownMenuItem(
-                          value: cat,
-                          child: Text(cat),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    categorie = value;
-                  });
-                },
+                onChanged: (value) => setState(() => categorie = value),
                 validator: (value) {
                   if (value == null) {
                     return 'Veuillez sélectionner une catégorie.';
@@ -148,24 +246,12 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
+              _buildDropdown(
+                'Emplacement',
+                Icons.pin_drop,
+                _campus,
                 value: emplacement,
-                decoration: const InputDecoration(
-                  labelText: 'Emplacement',
-                  prefixIcon: Icon(Icons.location_on),
-                ),
-                items: _campus
-                    .map((campus) => DropdownMenuItem(
-                          value: campus,
-                          child: Text(campus),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    emplacement = value;
-                  });
-                },
+                onChanged: (value) => setState(() => emplacement = value),
                 validator: (value) {
                   if (value == null) {
                     return 'Veuillez sélectionner un emplacement.';
@@ -174,12 +260,22 @@ class EditSignalementScreenState extends State<EditSignalementScreen> {
                 },
               ),
               const SizedBox(height: 32),
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: _submit,
-                icon: const Icon(Icons.save),
-                label: const Text('Enregistrer les modifications'),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Enregistrer les modifications',
+                  style: TextStyle(
+                    fontFamily: 'Questrial',
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
