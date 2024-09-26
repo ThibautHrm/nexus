@@ -79,7 +79,7 @@ class ProfilScreenState extends State<ProfilScreen> {
       await ref.putFile(_imageFile!);
       final url = await ref.getDownloadURL();
 
-      // Update Firestore with new image URL
+      // Met à jour firestore avec la bonne URL
       await FirebaseFirestore.instance
           .collection('utilisateurs')
           .doc(user!.uid)
