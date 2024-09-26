@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:nexus/models/comment_model.dart';
+import 'package:nexus/models/document_model.dart';
 import 'package:nexus/models/group_model.dart';
 import 'package:nexus/models/help_model.dart';
 import 'package:nexus/models/news_model.dart';
@@ -18,6 +19,7 @@ class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
   factory FirebaseService() => _instance;
   FirebaseService._internal();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Récupère l'instance de Firebase
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -546,5 +548,41 @@ class FirebaseService {
     } catch (e) {
       throw Exception("Erreur lors de la suppression du post : $e");
     }
+  }
+
+  // Méthode pour ajouter un document
+  Future<void> addDocument(DocumentModel document) async {
+    DocumentReference docRef = _firestore.collection('documents').doc();
+    document.id = docRef.id; // Générer un ID unique pour le document
+    await docRef.set(document.toMap());
+  }
+
+  // Méthode pour supprimer un document
+  Future<void> deleteDocument(String docId, String fileUrl) async {
+    // Supprimer l'enregistrement dans Firestore
+    await _firestore.collection('documents').doc(docId).delete();
+
+    // Supprimer le fichier dans Firebase Storage
+    final ref = _storage.refFromURL(fileUrl);
+    await ref.delete();
+  }
+
+  // Méthode pour uploader un fichier
+  Future<String> uploadFile(File file, String userId) async {
+    final ref =
+        _storage.ref().child('documents/$userId/${file.path.split('/').last}');
+    await ref.putFile(file);
+    return await ref.getDownloadURL(); // URL du fichier uploadé
+  }
+
+  // Méthode pour récupérer les documents d'un utilisateur
+  Stream<List<DocumentModel>> getUserDocuments(String userId) {
+    return _firestore
+        .collection('documents')
+        .where('ownerId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => DocumentModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 }

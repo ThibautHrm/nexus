@@ -130,7 +130,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Widget _buildUserInfo() {
     if (_currentUser == null) {
-      // Utilise staggeredDotsWave animation pendant le chargement
+      // Utilise une animation pendant le chargement
       return Center(
         child: LoadingAnimationWidget.staggeredDotsWave(
           color: AppColors.primary,
@@ -400,6 +400,20 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildStaffActionButton() {
+    if (_currentUser?.role == 'Staff') {
+      return _buildActionButton(
+          "Poster Nouvelles", Icons.newspaper_rounded, AppColors.primary, () {
+        Navigator.pushNamed(context, '/createNews');
+      });
+    } else {
+      return _buildActionButton("Documents", Icons.folder, AppColors.primary,
+          () {
+        Navigator.pushNamed(context, '/locker');
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -474,15 +488,12 @@ class HomeScreenState extends State<HomeScreen> {
                             AppColors.primary, () {
                           Navigator.pushNamed(context, '/signal');
                         }),
-                        _buildActionButton("Nouvelles", Icons.newspaper_rounded,
-                            AppColors.primary, () {
-                          Navigator.pushNamed(context, '/createNews');
-                        }),
+                        _buildStaffActionButton(),
                         _buildActionButton(
                             "Planning",
                             Icons.calendar_month_rounded,
                             AppColors.primary, () {
-                          // Action pour le placeholder
+                          // Action pour le planning
                         }),
                       ],
                     ),
